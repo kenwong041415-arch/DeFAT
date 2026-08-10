@@ -10,13 +10,30 @@ privacy checklist, model-role instructions (CLAUDE.md).
 
 ## Phase 1 — Walking skeleton + core math (MVP core)
 
-- Android project scaffold (Kotlin, Compose, Hilt, Room, Firebase).
-- Sign-in (Firebase Auth: email + Google).
-- Profile setup wizard (age, sex, height, weight, fat %, activity, goal).
+Implemented per [`docs/plans/phase1-implementation-plan.md`](plans/phase1-implementation-plan.md)
+(Opus plan, Sonnet build). Two deviations from the summary below, made
+explicit in that plan's §2 and carried forward here:
+
+- **D1 — no Firebase Auth / Firestore in Phase 1.** The app is local-first:
+  profile in DataStore, meals/weights in Room. No Firebase project exists
+  yet, and the dev container cannot reach Google's Maven repo, so adding
+  the Firebase plugin without `google-services.json` would break every
+  build. Sign-in + Firestore sync move to **Phase 1.5**, once the owner has
+  created the Firebase project (see that plan's §13 and §14).
+- **D3 — Firestore security-rules tests move to Phase 1.5 with it** (there
+  are no rules and no project to test against yet).
+
+What actually shipped:
+
+- Android project scaffold (Kotlin, Compose, Hilt, Room) — no Firebase yet.
+- Profile setup wizard (sex, birth date, height, weight, fat %, activity,
+  goal, medical disclaimer).
 - `core-domain`: BMR (Mifflin-St Jeor + Katch-McArdle), TDEE, calorie
-  target and macro split calculators — fully unit-tested (`docs/04`).
+  target, macro split, day rollup, safe-rate check, MET table — fully
+  unit-tested (`docs/04`).
 - Home screen: today's target vs intake ring, remaining kcal + protein.
 - Manual meal entry + manual weight entry. Day rollup logic.
+- English + Traditional Chinese (HK) strings.
 - **Exit test**: owner creates own profile, sees a sensible daily target,
   logs a manual meal.
 

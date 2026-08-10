@@ -16,7 +16,12 @@ truth and must be implemented exactly, as pure unit-tested Kotlin in
 
 Reference test vectors (must pass in unit tests):
 - Katch-McArdle: 80 kg @ 25% fat → LBM 60 → BMR **1666 kcal**.
-- Mifflin male: 80 kg, 175 cm, 30 y → **1780 kcal**.
+- Mifflin male: 80 kg, 175 cm, 30 y → **1748.75 kcal**.
+  (Corrected in the Phase 1 PR — this line previously read 1780 kcal, which
+  was an arithmetic slip; the formula above gives
+  `10×80 + 6.25×175 − 5×30 + 5 = 800 + 1093.75 − 150 + 5 = 1748.75`. The
+  female vector below already matched its formula, so the formula was kept
+  as ground truth. See `docs/plans/phase1-implementation-plan.md` D4.)
 - Mifflin female: 60 kg, 162 cm, 28 y → **1311.5 kcal**.
 
 ## TDEE (每日總消耗)
