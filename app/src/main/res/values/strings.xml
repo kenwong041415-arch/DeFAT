@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DeFAT</string>
+
+    <string name="common_next">Next</string>
+    <string name="common_back">Back</string>
+    <string name="common_save">Save</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_start">Start</string>
+    <string name="common_date">Date</string>
+
+    <string name="unit_kg">kg</string>
+    <string name="unit_cm">cm</string>
+    <string name="unit_kcal">kcal</string>
+    <string name="unit_g">g</string>
+
+    <string name="onboarding_welcome_title">Welcome to DeFAT</string>
+    <string name="onboarding_welcome_body">Set up your profile and we\'ll work out your daily calorie and protein targets.</string>
+
+    <string name="disclaimer_title">Before we start</string>
+    <string name="disclaimer_body">DeFAT provides general fitness and nutrition guidance. It is not medical advice and does not diagnose or treat any condition. If you have a medical condition (including diabetes, a history of eating disorders, or pregnancy), please consult a doctor first.</string>
+    <string name="disclaimer_accept">I understand</string>
+
+    <string name="basics_title">About you</string>
+    <string name="basics_sex">Sex</string>
+    <string name="sex_male">Male</string>
+    <string name="sex_female">Female</string>
+    <string name="basics_birth_date">Date of birth</string>
+    <string name="basics_age_years">%1$d years old</string>
+    <string name="basics_height">Height (cm)</string>
+
+    <string name="body_title">Your body right now</string>
+    <string name="body_weight">Weight (kg)</string>
+    <string name="body_fat_pct">Body fat %%</string>
+    <string name="body_fat_unknown">I don\'t know my body fat %%</string>
+    <string name="body_fat_hint">If you know your body fat %%, your estimate will be more accurate.</string>
+
+    <string name="activity_title">How active are you?</string>
+    <string name="activity_sedentary">Sedentary</string>
+    <string name="activity_sedentary_desc">Desk job, little or no exercise</string>
+    <string name="activity_light">Lightly active</string>
+    <string name="activity_light_desc">Light exercise 1–3 days a week</string>
+    <string name="activity_moderate">Moderately active</string>
+    <string name="activity_moderate_desc">Exercise 3–5 days a week</string>
+    <string name="activity_active">Very active</string>
+    <string name="activity_active_desc">Exercise 6–7 days a week</string>
+    <string name="activity_athlete">Athlete</string>
+    <string name="activity_athlete_desc">Twice-daily training or a physical job</string>
+
+    <string name="goal_title">Your goal</string>
+    <string name="goal_target_weight">Target weight (kg)</string>
+    <string name="goal_target_fat">Target body fat %% (optional)</string>
+    <string name="goal_target_date">Target date (optional)</string>
+    <string name="goal_total_to_lose">%1$.1f kg to lose</string>
+    <string name="goal_rate_safe">About %1$.1f%% of bodyweight per week — a healthy pace.</string>
+    <string name="goal_rate_fast">That\'s %1$.1f%% of bodyweight per week. Losing faster than 1%% a week is not recommended.</string>
+    <string name="goal_rate_slow">That\'s %1$.1f%% per week — slower than the usual 0.5–1%% range.</string>
+
+    <string name="summary_title">Your daily plan</string>
+    <string name="summary_bmr">Basal metabolic rate</string>
+    <string name="summary_tdee">Total daily energy</string>
+    <string name="summary_target">Daily calorie target</string>
+    <string name="summary_method_katch">Based on your body fat %%</string>
+    <string name="summary_method_mifflin">Based on your height, weight and age</string>
+    <string name="summary_floor_applied">We raised your target to the safe minimum of %1$d kcal.</string>
+
+    <string name="home_kcal_left">kcal left</string>
+    <string name="home_kcal_over">kcal over</string>
+    <string name="home_eaten_of_target">Eaten %1$d of %2$d kcal</string>
+    <string name="home_protein_progress">Protein %1$d / %2$d g</string>
+    <string name="home_carbs_progress">Carbs %1$d / %2$d g</string>
+    <string name="home_fat_progress">Fat %1$d / %2$d g</string>
+    <string name="home_metabolism_line">BMR %1$d · TDEE %2$d kcal</string>
+    <string name="home_metabolism_info_title">How we calculate this</string>
+    <string name="home_metabolism_info_body">Your BMR is the energy your body needs at rest. TDEE adds your activity on top. Your daily target is TDEE minus a safe deficit.</string>
+    <string name="home_meals_title">Today\'s meals</string>
+    <string name="home_meals_empty">No meals logged yet — tap + to add your first one.</string>
+    <string name="home_add_meal">Add meal</string>
+    <string name="home_log_weight">Log weight</string>
+    <string name="home_weight_none">No weight logged yet</string>
+    <string name="home_weight_as_of">As of %1$s</string>
+
+    <string name="meal_title_add">Add meal</string>
+    <string name="meal_title_edit">Edit meal</string>
+    <string name="meal_name">What did you eat?</string>
+    <string name="meal_kcal">Calories (kcal)</string>
+    <string name="meal_protein">Protein (g)</string>
+    <string name="meal_carbs">Carbs (g)</string>
+    <string name="meal_fat">Fat (g)</string>
+    <string name="meal_time">Time</string>
+    <string name="meal_calc_from_macros">Calculate calories from macros</string>
+    <string name="meal_macro_mismatch">Your calories and macros don\'t match — please check.</string>
+    <string name="meal_delete_confirm">Delete this meal?</string>
+
+    <string name="weight_title">Log weight</string>
+    <string name="weight_updates_target">This updates your daily target.</string>
+
+    <string name="profile_title">Profile</string>
+    <string name="profile_language_hint">To change the app language, open Android Settings → Apps → DeFAT → Language.</string>
+    <string name="profile_version">Version %1$s</string>
+
+    <string name="error_required">Required</string>
+    <string name="error_out_of_range">Enter a value between %1$s and %2$s</string>
+</resources>

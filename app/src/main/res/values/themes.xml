@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Platform theme only — the whole UI is Compose/Material3, so no
+        appcompat/material-components XML theme is needed (see plan D6).
+    -->
+    <style name="Theme.DeFAT" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/ic_launcher_background</item>
+    </style>
+</resources>
