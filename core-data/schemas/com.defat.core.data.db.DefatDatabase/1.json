@@ -1,0 +1,60 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "3f1b1c6e9c9d4a5e8b6b6c9a1e7f2d3a",
+    "entities": [
+      {
+        "tableName": "meals",
+        "createSql": "CREATE TABLE IF NOT EXISTS `meals` (`id` TEXT NOT NULL, `loggedAtMillis` INTEGER NOT NULL, `date` TEXT NOT NULL, `name` TEXT NOT NULL, `kcal` REAL NOT NULL, `proteinG` REAL NOT NULL, `carbsG` REAL NOT NULL, `fatG` REAL NOT NULL, `source` TEXT NOT NULL, `updatedAtMillis` INTEGER NOT NULL, `remoteId` TEXT, `pendingSync` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {"fieldPath": "id", "columnName": "id", "affinity": "TEXT", "notNull": true},
+          {"fieldPath": "loggedAtMillis", "columnName": "loggedAtMillis", "affinity": "INTEGER", "notNull": true},
+          {"fieldPath": "date", "columnName": "date", "affinity": "TEXT", "notNull": true},
+          {"fieldPath": "name", "columnName": "name", "affinity": "TEXT", "notNull": true},
+          {"fieldPath": "kcal", "columnName": "kcal", "affinity": "REAL", "notNull": true},
+          {"fieldPath": "proteinG", "columnName": "proteinG", "affinity": "REAL", "notNull": true},
+          {"fieldPath": "carbsG", "columnName": "carbsG", "affinity": "REAL", "notNull": true},
+          {"fieldPath": "fatG", "columnName": "fatG", "affinity": "REAL", "notNull": true},
+          {"fieldPath": "source", "columnName": "source", "affinity": "TEXT", "notNull": true},
+          {"fieldPath": "updatedAtMillis", "columnName": "updatedAtMillis", "affinity": "INTEGER", "notNull": true},
+          {"fieldPath": "remoteId", "columnName": "remoteId", "affinity": "TEXT", "notNull": false},
+          {"fieldPath": "pendingSync", "columnName": "pendingSync", "affinity": "INTEGER", "notNull": true}
+        ],
+        "primaryKey": {"autoGenerate": false, "columnNames": ["id"]},
+        "indices": [
+          {
+            "name": "index_meals_date",
+            "unique": false,
+            "columnNames": ["date"],
+            "orders": ["ASC"],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_meals_date` ON `${TABLE_NAME}` (`date`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "weight_entries",
+        "createSql": "CREATE TABLE IF NOT EXISTS `weight_entries` (`date` TEXT NOT NULL, `weightKg` REAL NOT NULL, `bodyFatPct` REAL, `recordedAtMillis` INTEGER NOT NULL, `source` TEXT NOT NULL, `updatedAtMillis` INTEGER NOT NULL, `remoteId` TEXT, `pendingSync` INTEGER NOT NULL, PRIMARY KEY(`date`))",
+        "fields": [
+          {"fieldPath": "date", "columnName": "date", "affinity": "TEXT", "notNull": true},
+          {"fieldPath": "weightKg", "columnName": "weightKg", "affinity": "REAL", "notNull": true},
+          {"fieldPath": "bodyFatPct", "columnName": "bodyFatPct", "affinity": "REAL", "notNull": false},
+          {"fieldPath": "recordedAtMillis", "columnName": "recordedAtMillis", "affinity": "INTEGER", "notNull": true},
+          {"fieldPath": "source", "columnName": "source", "affinity": "TEXT", "notNull": true},
+          {"fieldPath": "updatedAtMillis", "columnName": "updatedAtMillis", "affinity": "INTEGER", "notNull": true},
+          {"fieldPath": "remoteId", "columnName": "remoteId", "affinity": "TEXT", "notNull": false},
+          {"fieldPath": "pendingSync", "columnName": "pendingSync", "affinity": "INTEGER", "notNull": true}
+        ],
+        "primaryKey": {"autoGenerate": false, "columnNames": ["date"]},
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3f1b1c6e9c9d4a5e8b6b6c9a1e7f2d3a')"
+    ]
+  }
+}
