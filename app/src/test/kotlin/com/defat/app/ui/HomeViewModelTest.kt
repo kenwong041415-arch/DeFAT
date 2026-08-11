@@ -19,9 +19,11 @@ import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
@@ -66,7 +68,7 @@ class HomeViewModelTest {
     )
 
     @Test
-    fun `emits intake, remaining and protein for two fake meals`() {
+    fun `emits intake, remaining and protein for two fake meals`() = runTest {
         val profileRepository = FakeProfileRepository(goldenProfile())
         val mealRepository = FakeMealRepository(
             listOf(
@@ -82,6 +84,10 @@ class HomeViewModelTest {
         )
         val viewModel = HomeViewModel(observeTodayDashboard, mealRepository, weightRepository)
 
+        // uiState is stateIn(WhileSubscribed): the upstream only runs while
+        // something collects, so subscribe before reading the value.
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
         val state = viewModel.uiState.value
         assertTrue(state is HomeUiState.Content)
         state as HomeUiState.Content
@@ -94,7 +100,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `with no profile it needs onboarding`() {
+    fun `with no profile it needs onboarding`() = runTest {
         val profileRepository = FakeProfileRepository(initial = null)
         val mealRepository = FakeMealRepository()
         val weightRepository = FakeWeightRepository()
@@ -104,6 +110,8 @@ class HomeViewModelTest {
             com.defat.core.domain.usecase.ComputeDailyTargetUseCase(),
         )
         val viewModel = HomeViewModel(observeTodayDashboard, mealRepository, weightRepository)
+
+        backgroundScope.launch { viewModel.uiState.collect {} }
 
         assertEquals(HomeUiState.NeedsOnboarding, viewModel.uiState.value)
     }

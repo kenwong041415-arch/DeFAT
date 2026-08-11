@@ -9,6 +9,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,7 +43,16 @@ class MainActivity : ComponentActivity() {
 private fun DefatApp(viewModel: MainViewModel) {
     val startDestination by viewModel.startDestination.collectAsStateWithLifecycle()
 
-    val destination = startDestination
+    // Latch the first non-null value. `startDestination` keeps emitting as the
+    // profile changes, and feeding a live value into NavHost would rebuild the
+    // graph mid-session — NavController.setGraph resets the back stack, racing
+    // with the explicit navigate(HOME) after onboarding.
+    var latched by rememberSaveable { mutableStateOf<StartDestination?>(null) }
+    LaunchedEffect(startDestination) {
+        if (latched == null && startDestination != null) latched = startDestination
+    }
+
+    val destination = latched
     if (destination == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()

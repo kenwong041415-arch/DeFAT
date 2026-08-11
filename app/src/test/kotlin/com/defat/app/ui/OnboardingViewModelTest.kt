@@ -4,6 +4,7 @@ import com.defat.app.fake.FakeProfileRepository
 import com.defat.app.ui.onboarding.OnboardingViewModel
 import com.defat.core.domain.model.ActivityLevel
 import com.defat.core.domain.model.Sex
+import com.defat.core.domain.usecase.AssessGoalRateUseCase
 import com.defat.core.domain.usecase.ComputeDailyTargetUseCase
 import java.time.LocalDate
 import kotlin.test.assertEquals
@@ -30,7 +31,7 @@ class OnboardingViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         profileRepository = FakeProfileRepository()
-        viewModel = OnboardingViewModel(profileRepository, ComputeDailyTargetUseCase())
+        viewModel = OnboardingViewModel(profileRepository, ComputeDailyTargetUseCase(), AssessGoalRateUseCase())
     }
 
     @After

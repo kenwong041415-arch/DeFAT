@@ -3,6 +3,7 @@ package com.defat.app.ui.onboarding
 import com.defat.core.domain.model.ActivityLevel
 import com.defat.core.domain.model.DailyTarget
 import com.defat.core.domain.model.Sex
+import com.defat.core.domain.usecase.GoalRate
 import java.time.LocalDate
 import java.time.Period
 
@@ -29,6 +30,7 @@ data class OnboardingUiState(
     val goalTargetDate: LocalDate? = null,
 
     val dailyTarget: DailyTarget? = null,
+    val goalRate: GoalRate? = null,
     val isSaving: Boolean = false,
 ) {
     val ageYears: Int?

@@ -7,7 +7,9 @@ import com.defat.core.domain.model.Goal
 import com.defat.core.domain.model.Sex
 import com.defat.core.domain.model.UserProfile
 import com.defat.core.domain.repository.ProfileRepository
+import com.defat.core.domain.usecase.AssessGoalRateUseCase
 import com.defat.core.domain.usecase.ComputeDailyTargetUseCase
+import com.defat.core.domain.usecase.GoalRate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import java.time.LocalDate
@@ -25,6 +27,7 @@ import kotlinx.coroutines.launch
 class OnboardingViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
     private val computeDailyTarget: ComputeDailyTargetUseCase,
+    private val assessGoalRate: AssessGoalRateUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OnboardingUiState())
@@ -63,13 +66,24 @@ class OnboardingViewModel @Inject constructor(
     private fun update(transform: (OnboardingUiState) -> OnboardingUiState) {
         _uiState.update { current ->
             val next = transform(current)
-            next.copy(dailyTarget = computeTargetOrNull(next))
+            next.copy(
+                dailyTarget = computeTargetOrNull(next),
+                goalRate = computeGoalRateOrNull(next),
+            )
         }
     }
 
     private fun computeTargetOrNull(state: OnboardingUiState): com.defat.core.domain.model.DailyTarget? {
         val profile = state.toProvisionalProfileOrNull() ?: return null
         return runCatching { computeDailyTarget(profile, LocalDate.now()) }.getOrNull()
+    }
+
+    private fun computeGoalRateOrNull(state: OnboardingUiState): GoalRate? {
+        val weightKg = state.weightKg ?: return null
+        val goalWeightKg = state.goalTargetWeightKg ?: return null
+        return runCatching {
+            assessGoalRate(weightKg, goalWeightKg, state.goalTargetDate, LocalDate.now())
+        }.getOrNull()
     }
 
     fun completeOnboarding() {

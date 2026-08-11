@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -38,12 +39,20 @@ fun SummaryRoute(
     onBack: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Navigate only once the profile is actually persisted. Leaving the
+    // onboarding graph clears this ViewModel's store, which cancels
+    // viewModelScope — navigating first would abort the save mid-write and
+    // drop the whole profile.
+    LaunchedEffect(viewModel) {
+        viewModel.eventFlow.collect { event ->
+            if (event is OnboardingEvent.Completed) onStart()
+        }
+    }
+
     SummaryScreen(
         target = uiState.dailyTarget,
-        onStart = {
-            viewModel.completeOnboarding()
-            onStart()
-        },
+        onStart = viewModel::completeOnboarding,
         onBack = onBack,
     )
 }

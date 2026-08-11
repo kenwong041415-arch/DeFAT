@@ -21,6 +21,7 @@ fun DecimalField(
     modifier: Modifier = Modifier,
     suffix: String? = null,
     errorText: String? = null,
+    keyboardType: KeyboardType = KeyboardType.Decimal,
 ) {
     OutlinedTextField(
         value = value,
@@ -29,7 +30,7 @@ fun DecimalField(
         suffix = suffix?.let { { Text(it) } },
         isError = errorText != null,
         supportingText = errorText?.let { { Text(it) } },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         singleLine = true,
         modifier = modifier.fillMaxWidth(),
     )

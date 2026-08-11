@@ -18,7 +18,6 @@ import com.defat.app.ui.onboarding.ActivityRoute
 import com.defat.app.ui.onboarding.BasicsRoute
 import com.defat.app.ui.onboarding.BodyRoute
 import com.defat.app.ui.onboarding.GoalRoute
-import com.defat.app.ui.onboarding.OnboardingEvent
 import com.defat.app.ui.onboarding.OnboardingViewModel
 import com.defat.app.ui.onboarding.SummaryRoute
 import com.defat.app.ui.onboarding.WelcomeRoute

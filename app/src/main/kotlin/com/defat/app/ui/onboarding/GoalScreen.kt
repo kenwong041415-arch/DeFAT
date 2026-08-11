@@ -2,6 +2,7 @@ package com.defat.app.ui.onboarding
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -17,9 +18,7 @@ import com.defat.app.ui.component.DecimalField
 import com.defat.app.ui.component.WizardScaffold
 import com.defat.app.ui.theme.DefatTheme
 import com.defat.core.domain.calc.RateAssessment
-import com.defat.core.domain.calc.WeightRateCalculator
 import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 
 @Composable
 fun GoalRoute(
@@ -92,21 +91,17 @@ fun GoalScreen(
             val totalToLoseKg = weightKg - goalWeightKg
             Text(stringResource(R.string.goal_total_to_lose, totalToLoseKg))
 
-            val targetDate = uiState.goalTargetDate
-            if (targetDate != null && totalToLoseKg > 0) {
-                val weeks = ChronoUnit.DAYS.between(LocalDate.now(), targetDate) / 7.0
-                if (weeks > 0) {
-                    val weeklyLossKg = totalToLoseKg / weeks
-                    val pct = WeightRateCalculator.weeklyRatePctOfBodyweight(-weeklyLossKg, weightKg)
-                    val assessment = WeightRateCalculator.assess(-weeklyLossKg, weightKg)
-                    val (textRes, color) = when (assessment) {
-                        RateAssessment.TOO_FAST -> R.string.goal_rate_fast to MaterialTheme.colorScheme.error
-                        RateAssessment.TOO_SLOW -> R.string.goal_rate_slow to MaterialTheme.colorScheme.secondary
-                        else -> R.string.goal_rate_safe to MaterialTheme.colorScheme.primary
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(stringResource(textRes, pct), color = color)
+            // The pace arithmetic lives in AssessGoalRateUseCase (core-domain,
+            // unit-tested) — CLAUDE.md keeps formulas out of UI code.
+            val rate = uiState.goalRate
+            if (rate != null) {
+                val (textRes, color) = when (rate.assessment) {
+                    RateAssessment.TOO_FAST -> R.string.goal_rate_fast to MaterialTheme.colorScheme.error
+                    RateAssessment.TOO_SLOW -> R.string.goal_rate_slow to MaterialTheme.colorScheme.secondary
+                    else -> R.string.goal_rate_safe to MaterialTheme.colorScheme.primary
                 }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(stringResource(textRes, rate.weeklyRatePct), color = color)
             }
         }
     }

@@ -32,9 +32,9 @@
 
     <string name="body_title">Your body right now</string>
     <string name="body_weight">Weight (kg)</string>
-    <string name="body_fat_pct">Body fat %%</string>
-    <string name="body_fat_unknown">I don\'t know my body fat %%</string>
-    <string name="body_fat_hint">If you know your body fat %%, your estimate will be more accurate.</string>
+    <string name="body_fat_pct">Body fat %</string>
+    <string name="body_fat_unknown">I don\'t know my body fat %</string>
+    <string name="body_fat_hint">If you know your body fat %, your estimate will be more accurate.</string>
 
     <string name="activity_title">How active are you?</string>
     <string name="activity_sedentary">Sedentary</string>
@@ -50,7 +50,7 @@
 
     <string name="goal_title">Your goal</string>
     <string name="goal_target_weight">Target weight (kg)</string>
-    <string name="goal_target_fat">Target body fat %% (optional)</string>
+    <string name="goal_target_fat">Target body fat % (optional)</string>
     <string name="goal_target_date">Target date (optional)</string>
     <string name="goal_total_to_lose">%1$.1f kg to lose</string>
     <string name="goal_rate_safe">About %1$.1f%% of bodyweight per week — a healthy pace.</string>
@@ -61,7 +61,7 @@
     <string name="summary_bmr">Basal metabolic rate</string>
     <string name="summary_tdee">Total daily energy</string>
     <string name="summary_target">Daily calorie target</string>
-    <string name="summary_method_katch">Based on your body fat %%</string>
+    <string name="summary_method_katch">Based on your body fat %</string>
     <string name="summary_method_mifflin">Based on your height, weight and age</string>
     <string name="summary_floor_applied">We raised your target to the safe minimum of %1$d kcal.</string>
 

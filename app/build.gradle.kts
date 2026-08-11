@@ -34,7 +34,17 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+            // TopAppBar, ModalBottomSheet and the date/time pickers are still
+            // @ExperimentalMaterial3Api in this Compose BOM; opting in here
+            // keeps the annotation off every screen.
+            freeCompilerArgs.addAll(
+                "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
+            )
+        }
+    }
     lint {
         abortOnError = true
         warningsAsErrors = false

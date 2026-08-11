@@ -2,6 +2,7 @@ package com.defat.app.ui.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,7 +33,7 @@ fun WizardScaffold(
     modifier: Modifier = Modifier,
     backLabel: String? = null,
     onBack: (() -> Unit)? = null,
-    content: @Composable Column.() -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     Scaffold(
         modifier = modifier,
