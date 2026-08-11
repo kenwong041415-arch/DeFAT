@@ -7,7 +7,7 @@ import com.defat.core.data.db.entity.WeightEntryEntity
 
 @Database(
     entities = [MealEntity::class, WeightEntryEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class DefatDatabase : RoomDatabase() {
