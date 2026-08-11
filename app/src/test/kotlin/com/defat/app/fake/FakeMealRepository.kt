@@ -19,6 +19,9 @@ class FakeMealRepository(initial: List<Meal> = emptyList()) : MealRepository {
 
     override fun mealsOn(date: LocalDate) = meals.map { list -> list.filter { it.date == date } }
 
+    override fun recentMeals(limit: Int) =
+        meals.map { list -> list.sortedByDescending { it.loggedAt }.take(limit) }
+
     override suspend fun mealById(id: String): Meal? = meals.value.firstOrNull { it.id == id }
 
     override suspend fun upsert(meal: Meal) {

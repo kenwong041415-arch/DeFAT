@@ -10,6 +10,7 @@ object Routes {
     const val ONBOARDING_SUMMARY = "onboarding/summary"
 
     const val HOME = "home"
+    const val HISTORY = "history"
     const val MEAL_ADD = "meal/add"
     const val MEAL_EDIT = "meal/edit/{mealId}"
     fun mealEdit(id: String) = "meal/edit/$id"

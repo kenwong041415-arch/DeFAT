@@ -2,8 +2,8 @@ package com.defat.app.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.defat.core.domain.calc.MealGrouping
 import com.defat.core.domain.repository.MealRepository
-import com.defat.core.domain.repository.WeightRepository
 import com.defat.core.domain.usecase.ObserveTodayDashboardUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.stateIn
 class HomeViewModel @Inject constructor(
     observeTodayDashboard: ObserveTodayDashboardUseCase,
     mealRepository: MealRepository,
-    weightRepository: WeightRepository,
 ) : ViewModel() {
 
     private val today = LocalDate.now()
@@ -25,12 +24,11 @@ class HomeViewModel @Inject constructor(
     val uiState: StateFlow<HomeUiState> = combine(
         observeTodayDashboard(today),
         mealRepository.mealsOn(today),
-        weightRepository.latest,
-    ) { rollup, meals, weight ->
+    ) { rollup, meals ->
         if (rollup == null) {
             HomeUiState.NeedsOnboarding
         } else {
-            HomeUiState.Content(dayRollup = rollup, meals = meals, latestWeight = weight)
+            HomeUiState.Content(dayRollup = rollup, mealGroups = MealGrouping.groupByType(meals))
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState.Loading)
 }

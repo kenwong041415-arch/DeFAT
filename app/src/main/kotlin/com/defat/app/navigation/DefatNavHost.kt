@@ -89,6 +89,7 @@ fun DefatNavHost(
                 onAddMeal = { navController.navigate(Routes.MEAL_ADD) },
                 onEditMeal = { mealId -> navController.navigate(Routes.mealEdit(mealId)) },
                 onLogWeight = { navController.navigate(Routes.WEIGHT_LOG) },
+                onOpenHistory = { navController.navigate(Routes.HISTORY) },
                 onOpenProfile = { navController.navigate(Routes.PROFILE) },
             )
         }
