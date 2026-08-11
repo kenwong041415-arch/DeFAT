@@ -41,8 +41,8 @@ fun CalorieRing(
         label = "calorie-ring-progress",
     )
 
-    val trackColor = MaterialTheme.colorScheme.surfaceVariant
-    val progressColor = if (isOverTarget) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    val trackColor = MaterialTheme.colorScheme.outlineVariant
+    val progressColor = if (isOverTarget) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary
 
     Box(
         modifier = modifier
