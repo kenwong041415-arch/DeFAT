@@ -3,11 +3,14 @@ package com.defat.app.ui
 import androidx.lifecycle.SavedStateHandle
 import com.defat.app.fake.FakeMealRepository
 import com.defat.app.ui.meal.MealEditorViewModel
+import com.defat.core.domain.model.FrequentFood
 import com.defat.core.domain.model.Meal
 import com.defat.core.domain.model.MealSource
+import com.defat.core.domain.model.MealType
 import com.defat.core.domain.usecase.SaveMealUseCase
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -94,6 +97,7 @@ class MealEditorViewModelTest {
             carbsG = 50.0,
             fatG = 5.0,
             source = MealSource.MANUAL,
+            mealType = MealType.BREAKFAST,
         )
         val mealRepository = FakeMealRepository(listOf(existing))
         val vm = newViewModel(mealRepository, mealId = "meal-42")
@@ -107,5 +111,66 @@ class MealEditorViewModelTest {
         assertEquals(1, mealRepository.upsertCallCount)
         assertEquals("meal-42", mealRepository.lastUpserted?.id)
         assertEquals(350.0, mealRepository.lastUpserted?.kcal)
+    }
+
+    @Test
+    fun `zero or blank calories block save`() {
+        val vm = newViewModel(FakeMealRepository())
+        vm.setName("雞胸飯")
+
+        vm.setKcal("0")
+        assertFalse(vm.uiState.value.isSaveEnabled)
+        assertTrue(vm.uiState.value.showKcalError)
+
+        vm.setKcal("")
+        assertFalse(vm.uiState.value.isSaveEnabled)
+
+        vm.setKcal("520")
+        assertTrue(vm.uiState.value.isSaveEnabled)
+        assertFalse(vm.uiState.value.showKcalError)
+    }
+
+    @Test
+    fun `the kcal error only shows after the field is touched`() {
+        val vm = newViewModel(FakeMealRepository())
+        assertFalse(vm.uiState.value.isKcalValid)
+        assertFalse(vm.uiState.value.showKcalError)
+    }
+
+    @Test
+    fun `saves the meal type the user picked`() = runTest {
+        val mealRepository = FakeMealRepository()
+        val vm = newViewModel(mealRepository)
+        vm.setName("雞胸飯")
+        vm.setKcal("520")
+        vm.setMealType(MealType.DINNER)
+        vm.save()
+
+        assertEquals(MealType.DINNER, mealRepository.lastUpserted?.mealType)
+    }
+
+    @Test
+    fun `the meal type follows the time until the user picks one`() {
+        val vm = newViewModel(FakeMealRepository())
+
+        vm.setTime(LocalTime.of(19, 0))
+        assertEquals(MealType.DINNER, vm.uiState.value.mealType)
+
+        vm.setMealType(MealType.SNACK)
+        vm.setTime(LocalTime.of(8, 0))
+        assertEquals(MealType.SNACK, vm.uiState.value.mealType)
+    }
+
+    @Test
+    fun `a frequent food fills the name and the numbers but not the meal type`() {
+        val vm = newViewModel(FakeMealRepository())
+        vm.setMealType(MealType.BREAKFAST)
+        vm.applyFrequentFood(FrequentFood("雞胸飯", 3, 520.0, 48.0, 52.0, 9.0))
+
+        val state = vm.uiState.value
+        assertEquals("雞胸飯", state.nameText)
+        assertEquals("520", state.kcalText)
+        assertEquals("48", state.proteinText)
+        assertEquals(MealType.BREAKFAST, state.mealType)
     }
 }
