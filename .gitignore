@@ -1,0 +1,15 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+build/
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+# Secrets — never commit (docs/06)
+google-services.json
+*.jks
+*.keystore
+# NOTE: gradle/wrapper/gradle-wrapper.jar IS committed on purpose (CI needs it).

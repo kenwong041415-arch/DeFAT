@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DeFAT</string>
+
+    <string name="common_next">下一步</string>
+    <string name="common_back">返回</string>
+    <string name="common_save">儲存</string>
+    <string name="common_cancel">取消</string>
+    <string name="common_delete">刪除</string>
+    <string name="common_start">開始</string>
+    <string name="common_date">日期</string>
+
+    <string name="unit_kg">公斤</string>
+    <string name="unit_cm">厘米</string>
+    <string name="unit_kcal">千卡</string>
+    <string name="unit_g">克</string>
+
+    <string name="onboarding_welcome_title">歡迎使用 DeFAT</string>
+    <string name="onboarding_welcome_body">設定你嘅個人資料，我哋會計出你每日嘅卡路里同蛋白質目標。</string>
+
+    <string name="disclaimer_title">開始之前</string>
+    <string name="disclaimer_body">DeFAT 只提供一般健身及營養建議，並非醫療意見，亦不會診斷或治療任何疾病。如你有任何健康狀況（包括糖尿病、飲食失調病史或懷孕），請先諮詢醫生。</string>
+    <string name="disclaimer_accept">我明白</string>
+
+    <string name="basics_title">關於你</string>
+    <string name="basics_sex">性別</string>
+    <string name="sex_male">男</string>
+    <string name="sex_female">女</string>
+    <string name="basics_birth_date">出生日期</string>
+    <string name="basics_age_years">%1$d 歲</string>
+    <string name="basics_height">身高（厘米）</string>
+
+    <string name="body_title">你現時嘅身體數據</string>
+    <string name="body_weight">體重（公斤）</string>
+    <string name="body_fat_pct">體脂率 %</string>
+    <string name="body_fat_unknown">我唔知自己嘅體脂率</string>
+    <string name="body_fat_hint">如果知道體脂率，估算會更準確。</string>
+
+    <string name="activity_title">你嘅日常活動量？</string>
+    <string name="activity_sedentary">久坐</string>
+    <string name="activity_sedentary_desc">文職，幾乎冇運動</string>
+    <string name="activity_light">輕度活躍</string>
+    <string name="activity_light_desc">每週運動 1–3 日</string>
+    <string name="activity_moderate">中度活躍</string>
+    <string name="activity_moderate_desc">每週運動 3–5 日</string>
+    <string name="activity_active">高度活躍</string>
+    <string name="activity_active_desc">每週運動 6–7 日</string>
+    <string name="activity_athlete">運動員</string>
+    <string name="activity_athlete_desc">每日兩練或體力勞動</string>
+
+    <string name="goal_title">你嘅目標</string>
+    <string name="goal_target_weight">目標體重（公斤）</string>
+    <string name="goal_target_fat">目標體脂率 %（可選）</string>
+    <string name="goal_target_date">目標日期（可選）</string>
+    <string name="goal_total_to_lose">仲要減 %1$.1f 公斤</string>
+    <string name="goal_total_to_gain">要增 %1$.1f 公斤</string>
+    <string name="goal_maintain">維持現時體重</string>
+    <string name="goal_rate_safe">大約每星期減體重嘅 %1$.1f%%，速度健康。</string>
+    <string name="goal_rate_fast">即係每星期減 %1$.1f%%。每星期超過 1%% 並唔建議。</string>
+    <string name="goal_rate_slow">即係每星期 %1$.1f%%，比一般 0.5–1%% 慢。</string>
+
+    <string name="summary_title">你嘅每日計劃</string>
+    <string name="summary_bmr">基礎代謝率</string>
+    <string name="summary_tdee">每日總消耗</string>
+    <string name="summary_target">每日卡路里目標</string>
+    <string name="summary_method_katch">根據你嘅體脂率計算</string>
+    <string name="summary_method_mifflin">根據你嘅身高、體重同年齡計算</string>
+    <string name="summary_floor_applied">已將目標調高至安全下限 %1$d 千卡。</string>
+
+    <string name="home_kcal_left">千卡可食</string>
+    <string name="home_kcal_over">超出千卡</string>
+    <string name="home_eaten_of_target">已食 %1$d / %2$d 千卡</string>
+    <string name="home_protein_progress">蛋白質 %1$d / %2$d 克</string>
+    <string name="home_carbs_progress">碳水 %1$d / %2$d 克</string>
+    <string name="home_fat_progress">脂肪 %1$d / %2$d 克</string>
+    <string name="home_metabolism_line">基礎代謝 %1$d · 總消耗 %2$d 千卡</string>
+    <string name="home_metabolism_info_title">點計出嚟</string>
+    <string name="home_metabolism_info_body">基礎代謝率（BMR）係你身體休息時所需嘅能量，加埋你嘅日常活動量就係每日總消耗（TDEE）。你嘅每日目標就係喺 TDEE 基礎上，減去一個安全嘅赤字。</string>
+    <string name="home_meals_title">今日嘅餐</string>
+    <string name="home_meals_empty">仲未記錄任何一餐，撳 + 加入第一餐。</string>
+    <string name="home_add_meal">加一餐</string>
+    <string name="home_log_weight">記錄體重</string>
+    <string name="home_weight_none">仲未記錄體重</string>
+    <string name="home_weight_as_of">更新於 %1$s</string>
+
+    <string name="meal_title_add">加一餐</string>
+    <string name="meal_title_edit">修改餐點</string>
+    <string name="meal_name">你食咗咩？</string>
+    <string name="meal_kcal">卡路里（千卡）</string>
+    <string name="meal_protein">蛋白質（克）</string>
+    <string name="meal_carbs">碳水化合物（克）</string>
+    <string name="meal_fat">脂肪（克）</string>
+    <string name="meal_time">時間</string>
+    <string name="meal_calc_from_macros">由營養素計算卡路里</string>
+    <string name="meal_macro_mismatch">卡路里同營養素對唔上，請檢查一下。</string>
+    <string name="meal_delete_confirm">確定刪除呢一餐？</string>
+
+    <string name="weight_title">記錄體重</string>
+    <string name="weight_updates_target">呢個會更新你嘅每日目標。</string>
+
+    <string name="profile_title">個人資料</string>
+    <string name="profile_language_hint">想轉語言，可以去 Android 設定 → 應用程式 → DeFAT → 語言。</string>
+    <string name="profile_version">版本 %1$s</string>
+
+    <string name="error_required">必填</string>
+    <string name="error_out_of_range">請輸入 %1$s 至 %2$s 之間嘅數值</string>
+</resources>
