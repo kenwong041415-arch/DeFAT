@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # the "test-build" pre-release below is updated in place
 
 concurrency:
   group: android-ci-${{ github.ref }}
@@ -52,6 +52,26 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
+
+      # Actions artifacts require a signed-in GitHub account to download, which
+      # is a dead end for the project owner on a phone (GitHub answers 404).
+      # A pre-release asset has a stable, login-free direct link instead:
+      #   https://github.com/<owner>/<repo>/releases/download/test-build/app-debug.apk
+      - name: Publish the APK as the rolling test build
+        if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release view test-build >/dev/null 2>&1 || gh release create test-build \
+            --prerelease \
+            --title "DeFAT test build" \
+            --notes "Latest debug build. Download app-debug.apk below and tap it on your Android phone. Not from the Play Store, so Android will ask you to allow installing from your browser or file manager."
+          gh release upload test-build app/build/outputs/apk/debug/app-debug.apk --clobber
+          gh release edit test-build \
+            --notes "Latest debug build, from commit \`${GITHUB_SHA:0:7}\` on \`${GITHUB_REF_NAME}\` ($(date -u '+%Y-%m-%d %H:%M UTC')).
+
+          Download **app-debug.apk** below and tap it on your Android phone. It is not from the Play Store, so Android will ask you to allow installing from your browser or file manager — that is expected for a test build."
 
       - name: Upload test and lint reports
         if: always()

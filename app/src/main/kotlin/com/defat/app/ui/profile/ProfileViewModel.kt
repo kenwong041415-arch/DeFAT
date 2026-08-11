@@ -12,16 +12,12 @@ import com.defat.core.domain.usecase.ComputeDailyTargetUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import javax.inject.Inject
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -34,14 +30,19 @@ data class ProfileFormState(
     val heightCmText: String = "",
     val weightKgText: String = "",
     val bodyFatPctText: String = "",
-    val bodyFatUnknown: Boolean = false,
     val activityLevel: ActivityLevel = ActivityLevel.MODERATE,
     val goalTargetWeightText: String = "",
 ) {
+    /** Blank body fat means "unknown" and is valid; anything else must parse and be in range. */
+    val isBodyFatValid: Boolean
+        get() = bodyFatPctText.isBlank() ||
+            bodyFatPctText.toDoubleOrNull()?.let { it in 3.0..75.0 } == true
+
     val isValid: Boolean
         get() = heightCmText.toDoubleOrNull()?.let { it in 100.0..250.0 } == true &&
             weightKgText.toDoubleOrNull()?.let { it in 30.0..300.0 } == true &&
-            goalTargetWeightText.toDoubleOrNull()?.let { it in 30.0..300.0 } == true
+            goalTargetWeightText.toDoubleOrNull()?.let { it in 30.0..300.0 } == true &&
+            isBodyFatValid
 }
 
 sealed interface ProfileUiState {
@@ -86,6 +87,7 @@ class ProfileViewModel @Inject constructor(
 
     fun save() {
         val state = uiState.value as? ProfileUiState.Content ?: return
+        if (!state.form.isValid) return
         val updated = state.form.toUserProfileOrNull(state.existingProfile) ?: return
         viewModelScope.launch {
             profileRepository.save(updated)
@@ -98,7 +100,6 @@ class ProfileViewModel @Inject constructor(
         heightCmText = heightCm.toString(),
         weightKgText = weightKg.toString(),
         bodyFatPctText = bodyFatPct?.toString() ?: "",
-        bodyFatUnknown = bodyFatPct == null,
         activityLevel = activityLevel,
         goalTargetWeightText = goal.targetWeightKg.toString(),
     )
@@ -107,12 +108,17 @@ class ProfileViewModel @Inject constructor(
         val heightCm = heightCmText.toDoubleOrNull() ?: return null
         val weightKg = weightKgText.toDoubleOrNull() ?: return null
         val goalTargetWeightKg = goalTargetWeightText.toDoubleOrNull() ?: return null
+        if (!isBodyFatValid) return null
+        // Blank = unknown (Mifflin path). Using the text rather than the
+        // stored "unknown" flag lets someone who started without a body-fat
+        // reading type one in later.
+        val bodyFat = bodyFatPctText.takeIf { it.isNotBlank() }?.toDoubleOrNull()
         return UserProfile(
             sex = sex,
             birthDate = birthDate,
             heightCm = heightCm,
             weightKg = weightKg,
-            bodyFatPct = if (bodyFatUnknown) null else bodyFatPctText.toDoubleOrNull(),
+            bodyFatPct = bodyFat,
             activityLevel = activityLevel,
             goal = Goal(
                 targetWeightKg = goalTargetWeightKg,

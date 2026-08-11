@@ -53,6 +53,8 @@
     <string name="goal_target_fat">目標體脂率 %（可選）</string>
     <string name="goal_target_date">目標日期（可選）</string>
     <string name="goal_total_to_lose">仲要減 %1$.1f 公斤</string>
+    <string name="goal_total_to_gain">要增 %1$.1f 公斤</string>
+    <string name="goal_maintain">維持現時體重</string>
     <string name="goal_rate_safe">大約每星期減體重嘅 %1$.1f%%，速度健康。</string>
     <string name="goal_rate_fast">即係每星期減 %1$.1f%%。每星期超過 1%% 並唔建議。</string>
     <string name="goal_rate_slow">即係每星期 %1$.1f%%，比一般 0.5–1%% 慢。</string>

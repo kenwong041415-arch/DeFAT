@@ -27,9 +27,10 @@ AI development sessions: read [`CLAUDE.md`](CLAUDE.md) first.
 
 ## Building
 
-Requires JDK 21. Android Studio (or the Android SDK + `ANDROID_HOME`) is
-needed to build `:app` and `:core-data`; `:core-domain` is pure Kotlin/JVM
-and builds without the SDK:
+Requires JDK 17 or newer (CI uses 21); all modules target Java 17 bytecode.
+Android Studio (or the Android SDK + `ANDROID_HOME`) is needed to build
+`:app` and `:core-data`; `:core-domain` is pure Kotlin/JVM and builds
+without the SDK:
 
 ```
 ./gradlew :core-domain:test        # pure-Kotlin nutrition/metabolism math
@@ -42,13 +43,18 @@ to get an installable build.
 
 ## Installing the app (no Play Store yet — this is a test build)
 
-1. On GitHub, make sure Actions are enabled: **Settings → Actions →
-   General → "Allow all actions"**.
-2. Open the repo's **Actions** tab → click the newest green run →
-   scroll down to **Artifacts** → download `defat-debug-apk`.
-3. It downloads as a `.zip`. Unzip it on your phone (or unzip on a
-   computer and copy `app-debug.apk` over).
-4. Tap `app-debug.apk` on the phone. Android will ask permission to
-   install from that app (file manager/browser) — allow it, then Install.
-5. This is a debug build signed with the standard Android debug key, not
+Every green CI run republishes the APK to the **`test-build`** pre-release,
+so this link always points at the latest build and needs no GitHub login:
+
+**https://github.com/kenwong041415-arch/DeFAT/releases/download/test-build/app-debug.apk**
+
+1. Open that link on the phone — it downloads `app-debug.apk` directly (no
+   zip, no sign-in).
+2. Tap the downloaded file. Android will ask permission to install from
+   your browser or file manager — allow it, then Install.
+3. This is a debug build signed with the standard Android debug key, not
    from the Play Store — that's expected for now.
+
+The same APK is also attached to each workflow run as the
+`defat-debug-apk` artifact, but Actions artifacts answer **404 unless you
+are signed in to GitHub**, so prefer the release link above.

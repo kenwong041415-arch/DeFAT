@@ -89,7 +89,15 @@ fun GoalScreen(
         if (weightKg != null && goalWeightKg != null) {
             Spacer(modifier = Modifier.height(16.dp))
             val totalToLoseKg = weightKg - goalWeightKg
-            Text(stringResource(R.string.goal_total_to_lose, totalToLoseKg))
+            // Only a loss gets the "kg to lose" wording; a maintain or gain
+            // goal would otherwise read as a negative amount to lose.
+            if (totalToLoseKg > 0) {
+                Text(stringResource(R.string.goal_total_to_lose, totalToLoseKg))
+            } else if (totalToLoseKg < 0) {
+                Text(stringResource(R.string.goal_total_to_gain, -totalToLoseKg))
+            } else {
+                Text(stringResource(R.string.goal_maintain))
+            }
 
             // The pace arithmetic lives in AssessGoalRateUseCase (core-domain,
             // unit-tested) — CLAUDE.md keeps formulas out of UI code.

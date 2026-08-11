@@ -53,6 +53,8 @@
     <string name="goal_target_fat">Target body fat % (optional)</string>
     <string name="goal_target_date">Target date (optional)</string>
     <string name="goal_total_to_lose">%1$.1f kg to lose</string>
+    <string name="goal_total_to_gain">%1$.1f kg to gain</string>
+    <string name="goal_maintain">Maintaining your current weight</string>
     <string name="goal_rate_safe">About %1$.1f%% of bodyweight per week — a healthy pace.</string>
     <string name="goal_rate_fast">That\'s %1$.1f%% of bodyweight per week. Losing faster than 1%% a week is not recommended.</string>
     <string name="goal_rate_slow">That\'s %1$.1f%% per week — slower than the usual 0.5–1%% range.</string>
