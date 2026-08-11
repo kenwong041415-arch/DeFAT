@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -68,7 +69,7 @@ class HomeViewModelTest {
     )
 
     @Test
-    fun `emits intake, remaining and protein for two fake meals`() = runTest {
+    fun `emits intake, remaining and protein for two fake meals`() = runTest(testDispatcher) {
         val profileRepository = FakeProfileRepository(goldenProfile())
         val mealRepository = FakeMealRepository(
             listOf(
@@ -87,6 +88,7 @@ class HomeViewModelTest {
         // uiState is stateIn(WhileSubscribed): the upstream only runs while
         // something collects, so subscribe before reading the value.
         backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
 
         val state = viewModel.uiState.value
         assertTrue(state is HomeUiState.Content)
@@ -100,7 +102,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `with no profile it needs onboarding`() = runTest {
+    fun `with no profile it needs onboarding`() = runTest(testDispatcher) {
         val profileRepository = FakeProfileRepository(initial = null)
         val mealRepository = FakeMealRepository()
         val weightRepository = FakeWeightRepository()
@@ -112,6 +114,7 @@ class HomeViewModelTest {
         val viewModel = HomeViewModel(observeTodayDashboard, mealRepository, weightRepository)
 
         backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
 
         assertEquals(HomeUiState.NeedsOnboarding, viewModel.uiState.value)
     }
