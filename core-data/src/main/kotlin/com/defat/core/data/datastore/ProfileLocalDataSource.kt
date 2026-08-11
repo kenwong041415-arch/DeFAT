@@ -39,30 +39,37 @@ class ProfileLocalDataSource @Inject constructor(
             .map { prefs -> prefs[ProfileKeys.ONBOARDING_COMPLETE] ?: false }
 
     suspend fun save(profile: UserProfile) {
+        // Nullable properties are read into locals first: they belong to a class in
+        // another module, so Kotlin cannot smart-cast them after a null check.
+        val bodyFatPct = profile.bodyFatPct
+        val goalFatPct = profile.goal.targetBodyFatPct
+        val goalDate = profile.goal.targetDate
+        val acceptedAt = profile.disclaimerAcceptedAt
+
         dataStore.edit { prefs ->
             prefs[ProfileKeys.SEX] = profile.sex.name
             prefs[ProfileKeys.BIRTH_DATE] = profile.birthDate.toString()
             prefs[ProfileKeys.HEIGHT_CM] = profile.heightCm
             prefs[ProfileKeys.WEIGHT_KG] = profile.weightKg
-            if (profile.bodyFatPct != null) {
-                prefs[ProfileKeys.BODY_FAT_PCT] = profile.bodyFatPct
+            if (bodyFatPct != null) {
+                prefs[ProfileKeys.BODY_FAT_PCT] = bodyFatPct
             } else {
                 prefs.remove(ProfileKeys.BODY_FAT_PCT)
             }
             prefs[ProfileKeys.ACTIVITY_LEVEL] = profile.activityLevel.name
             prefs[ProfileKeys.GOAL_TARGET_WEIGHT_KG] = profile.goal.targetWeightKg
-            if (profile.goal.targetBodyFatPct != null) {
-                prefs[ProfileKeys.GOAL_TARGET_FAT_PCT] = profile.goal.targetBodyFatPct
+            if (goalFatPct != null) {
+                prefs[ProfileKeys.GOAL_TARGET_FAT_PCT] = goalFatPct
             } else {
                 prefs.remove(ProfileKeys.GOAL_TARGET_FAT_PCT)
             }
-            if (profile.goal.targetDate != null) {
-                prefs[ProfileKeys.GOAL_TARGET_DATE] = profile.goal.targetDate.toString()
+            if (goalDate != null) {
+                prefs[ProfileKeys.GOAL_TARGET_DATE] = goalDate.toString()
             } else {
                 prefs.remove(ProfileKeys.GOAL_TARGET_DATE)
             }
-            if (profile.disclaimerAcceptedAt != null) {
-                prefs[ProfileKeys.DISCLAIMER_ACCEPTED_AT] = profile.disclaimerAcceptedAt.toEpochMilli()
+            if (acceptedAt != null) {
+                prefs[ProfileKeys.DISCLAIMER_ACCEPTED_AT] = acceptedAt.toEpochMilli()
             } else {
                 prefs.remove(ProfileKeys.DISCLAIMER_ACCEPTED_AT)
             }
