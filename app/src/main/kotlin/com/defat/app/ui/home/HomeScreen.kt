@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -98,18 +97,28 @@ fun HomeScreen(
         drawerContent = {
             DefatDrawerContent(
                 dailyTargetKcal = dailyTargetKcal,
+                // Navigate INSIDE the coroutine, after close() completes.
+                // Navigating first disposes Home and cancels the close
+                // animation, and drawerState is rememberSaveable — so the
+                // drawer would still be open when the user comes back.
                 onToday = { scope.launch { drawerState.close() } },
                 onLogWeight = {
-                    scope.launch { drawerState.close() }
-                    onLogWeight()
+                    scope.launch {
+                        drawerState.close()
+                        onLogWeight()
+                    }
                 },
                 onHistory = {
-                    scope.launch { drawerState.close() }
-                    onOpenHistory()
+                    scope.launch {
+                        drawerState.close()
+                        onOpenHistory()
+                    }
                 },
                 onProfile = {
-                    scope.launch { drawerState.close() }
-                    onOpenProfile()
+                    scope.launch {
+                        drawerState.close()
+                        onOpenProfile()
+                    }
                 },
             )
         },

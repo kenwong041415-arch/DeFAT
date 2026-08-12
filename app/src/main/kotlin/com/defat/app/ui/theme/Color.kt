@@ -72,3 +72,33 @@ val DarkSurfaceVariant = Color(0xFF1E2E2A)
 val DarkOnSurfaceVariant = Color(0xFF8CA39C)
 val DarkOutline = Color(0xFF5C716B)
 val DarkOutlineVariant = Color(0xFF2A3B36)
+
+// --- Surface containers -------------------------------------------------
+// lightColorScheme()/darkColorScheme() do NOT derive these from `surface`;
+// anything left unset keeps Material's baseline purple-grey tokens. They
+// drive Card (surfaceContainerHighest), ModalDrawerSheet and
+// ModalBottomSheet (surfaceContainerLow), AlertDialog and DatePickerDialog
+// (surfaceContainerHigh) and the TimePicker dial — i.e. most of the app's
+// chrome. A green-biased ramp keeps the pine/jade identity everywhere
+// instead of only on the accents.
+val LightSurfaceContainerLowest = Color(0xFFFFFFFF)
+val LightSurfaceContainerLow = Color(0xFFF7FAF8)
+val LightSurfaceContainer = Color(0xFFF2F6F4)
+val LightSurfaceContainerHigh = Color(0xFFEAF0ED)
+val LightSurfaceContainerHighest = Color(0xFFE3EAE7)
+val LightSurfaceBright = Color(0xFFFFFFFF)
+val LightSurfaceDim = Color(0xFFDDE5E2)
+val LightInverseSurface = Color(0xFF2A3833)
+val LightInverseOnSurface = Color(0xFFEFF3F1)
+val LightInversePrimary = Color(0xFF8FC9BC)
+
+val DarkSurfaceContainerLowest = Color(0xFF070F0D)
+val DarkSurfaceContainerLow = Color(0xFF14211E)
+val DarkSurfaceContainer = Color(0xFF182622)
+val DarkSurfaceContainerHigh = Color(0xFF21322D)
+val DarkSurfaceContainerHighest = Color(0xFF2B3E38)
+val DarkSurfaceBright = Color(0xFF2B3E38)
+val DarkSurfaceDim = Color(0xFF0C1614)
+val DarkInverseSurface = Color(0xFFE3EBE8)
+val DarkInverseOnSurface = Color(0xFF14211E)
+val DarkInversePrimary = Color(0xFF14574A)

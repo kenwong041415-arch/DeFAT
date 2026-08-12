@@ -53,12 +53,21 @@ class MealTypeMigrationSqlTest {
         )
     """.trimIndent()
 
+    /**
+     * v1 also carried @Entity(indices = [Index("date")]). ALTER TABLE ADD
+     * COLUMN cannot drop an index, so the migration does not depend on it —
+     * but the fixture is only honestly "the v1 schema" with it present.
+     */
+    private val v1CreateIndexSql =
+        "CREATE INDEX IF NOT EXISTS `index_meals_date` ON `meals` (`date`)"
+
     private lateinit var connection: Connection
 
     @Before
     fun setUp() {
         connection = DriverManager.getConnection("jdbc:sqlite::memory:")
-        connection.createStatement().use { it.execute(v1CreateTableSql) }
+        connection.createStatement().use { it.execute(v1CreateTableSql)
+        execute(v1CreateIndexSql) }
     }
 
     @After
