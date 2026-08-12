@@ -67,6 +67,32 @@
     <string name="summary_method_mifflin">根據你嘅身高、體重同年齡計算</string>
     <string name="summary_floor_applied">已將目標調高至安全下限 %1$d 千卡。</string>
 
+    <string name="home_title_today">今日</string>
+    <string name="nav_open_menu">開啟選單</string>
+    <string name="drawer_target_line">每日目標 %1$d 千卡</string>
+    <string name="drawer_charts">進度圖表</string>
+    <string name="drawer_coming_soon">稍後推出</string>
+
+    <string name="history_title">歷史記錄</string>
+    <string name="history_pick_date">揀日期</string>
+    <string name="history_prev_day">前一日</string>
+    <string name="history_next_day">下一日</string>
+    <string name="history_totals_title">嗰日總計</string>
+
+    <string name="meal_type_breakfast">早餐</string>
+    <string name="meal_type_lunch">午餐</string>
+    <string name="meal_type_afternoon_tea">下午茶</string>
+    <string name="meal_type_dinner">晚餐</string>
+    <string name="meal_type_snack">小食</string>
+    <string name="meal_type_label">邊一餐？</string>
+
+    <string name="macro_protein">蛋白質</string>
+    <string name="macro_carbs">碳水</string>
+    <string name="macro_fat">脂肪</string>
+    <string name="macro_used_of_target">%1$d / %2$d 克</string>
+    <string name="kcal_value">%1$d 千卡</string>
+    <string name="value_none">—</string>
+
     <string name="home_kcal_left">千卡可食</string>
     <string name="home_kcal_over">超出千卡</string>
     <string name="home_eaten_of_target">已食 %1$d / %2$d 千卡</string>
@@ -74,14 +100,13 @@
     <string name="home_carbs_progress">碳水 %1$d / %2$d 克</string>
     <string name="home_fat_progress">脂肪 %1$d / %2$d 克</string>
     <string name="home_metabolism_line">基礎代謝 %1$d · 總消耗 %2$d 千卡</string>
+    <string name="home_metabolism_footnote">基礎代謝 %1$d · 總消耗 %2$d 千卡 · 撳睇解釋</string>
     <string name="home_metabolism_info_title">點計出嚟</string>
     <string name="home_metabolism_info_body">基礎代謝率（BMR）係你身體休息時所需嘅能量，加埋你嘅日常活動量就係每日總消耗（TDEE）。你嘅每日目標就係喺 TDEE 基礎上，減去一個安全嘅赤字。</string>
     <string name="home_meals_title">今日嘅餐</string>
     <string name="home_meals_empty">仲未記錄任何一餐，撳 + 加入第一餐。</string>
+    <string name="home_group_empty">仲未記錄</string>
     <string name="home_add_meal">加一餐</string>
-    <string name="home_log_weight">記錄體重</string>
-    <string name="home_weight_none">仲未記錄體重</string>
-    <string name="home_weight_as_of">更新於 %1$s</string>
 
     <string name="meal_title_add">加一餐</string>
     <string name="meal_title_edit">修改餐點</string>
@@ -94,6 +119,10 @@
     <string name="meal_calc_from_macros">由營養素計算卡路里</string>
     <string name="meal_macro_mismatch">卡路里同營養素對唔上，請檢查一下。</string>
     <string name="meal_delete_confirm">確定刪除呢一餐？</string>
+    <string name="meal_frequent_title">常用食物</string>
+    <string name="meal_frequent_chip">%1$s · %2$d 千卡</string>
+    <string name="meal_frequent_add">填入 %1$s</string>
+    <string name="meal_kcal_required">請輸入卡路里，一定要大過 0。</string>
 
     <string name="weight_title">記錄體重</string>
     <string name="weight_updates_target">呢個會更新你嘅每日目標。</string>

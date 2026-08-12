@@ -12,4 +12,9 @@ local.properties
 google-services.json
 *.jks
 *.keystore
+# Exception: the debug keystore is committed on purpose so every CI build is
+# signed with the same key and test APKs install over the previous one instead
+# of forcing an uninstall (which would wipe the owner's logged meals).
+# Standard android/android credentials; it can never sign a Play release.
+!app/debug.keystore
 # NOTE: gradle/wrapper/gradle-wrapper.jar IS committed on purpose (CI needs it).

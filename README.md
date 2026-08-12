@@ -7,10 +7,10 @@ progressive coaching engine.
 
 ## Status
 
-**Phase 1 — Walking skeleton + core math.** Installable Android app,
-local-first (no sign-in, no Firebase yet — see
-[`docs/plans/phase1-implementation-plan.md`](docs/plans/phase1-implementation-plan.md)
-for the full plan and its deviations from the original roadmap). The
+**Phase 1.6 — UI revision + meal types.** Installable Android app,
+local-first (no sign-in, no Firebase yet). Home groups the day's meals by
+meal type, a navigation drawer holds weight logging, history and profile,
+and the app carries its own pine/jade identity. The
 critical decisions and plans live in [`docs/`](docs/):
 
 1. [Blueprint](docs/00-blueprint.md) — what we're building and for whom
@@ -20,7 +20,9 @@ critical decisions and plans live in [`docs/`](docs/):
 5. [Metabolism rules](docs/04-health-metabolism.md) — BMR/TDEE formulas
 6. [AI nutrition pipeline](docs/05-ai-nutrition.md) — photo/menu analysis
 7. [Privacy & compliance](docs/06-privacy-compliance.md) — health-data rules
-8. [Phase 1 plan](docs/plans/phase1-implementation-plan.md) — implementation
+8. [Phase 1 plan](docs/plans/phase1-implementation-plan.md) — the walking
+   skeleton and the nutrition math
+9. [Phase 1.6 plan](docs/plans/phase1.6-ui-revision-plan.md) — implementation
    spec for the current phase
 
 AI development sessions: read [`CLAUDE.md`](CLAUDE.md) first.
@@ -54,6 +56,13 @@ so this link always points at the latest build and needs no GitHub login:
    your browser or file manager — allow it, then Install.
 3. This is a debug build signed with the standard Android debug key, not
    from the Play Store — that's expected for now.
+
+**Builds install over each other from 0.2.0 onward.** Every APK is signed
+with the committed `app/debug.keystore`, so a new build updates the app in
+place and your logged meals survive. Builds before 0.2.0 were each signed
+with a different key generated on the CI runner, which is why the first
+update to 0.2.0 may still refuse to install and force one uninstall — see
+`docs/plans/phase1.6-ui-revision-plan.md` §3 R1.
 
 The same APK is also attached to each workflow run as the
 `defat-debug-apk` artifact, but Actions artifacts answer **404 unless you

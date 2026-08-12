@@ -36,4 +36,13 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(kotlin("test"))
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.sqlite.jdbc)
+}
+
+// MealTypeMigrationSqlTest exercises SQLite's strftime(..., 'localtime'),
+// which reads the OS TZ, while the expected values come from java.time.
+// Pin both to the owner's zone so the test is deterministic on any runner.
+tasks.withType<Test>().configureEach {
+    environment("TZ", "Asia/Hong_Kong")
+    systemProperty("user.timezone", "Asia/Hong_Kong")
 }
