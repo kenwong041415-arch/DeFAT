@@ -66,8 +66,10 @@ class MealTypeMigrationSqlTest {
     @Before
     fun setUp() {
         connection = DriverManager.getConnection("jdbc:sqlite::memory:")
-        connection.createStatement().use { it.execute(v1CreateTableSql)
-        execute(v1CreateIndexSql) }
+        connection.createStatement().use { statement ->
+            statement.execute(v1CreateTableSql)
+            statement.execute(v1CreateIndexSql)
+        }
     }
 
     @After
