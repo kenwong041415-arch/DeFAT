@@ -42,8 +42,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -193,10 +193,13 @@ fun MealEditorScreen(
                             label = {
                                 Text(stringResource(R.string.meal_frequent_chip, food.name, food.kcal.roundKcal()))
                             },
-                            // clearAndSetSemantics, not semantics: plain semantics
-                            // ADDS to the merged node, so TalkBack would read
-                            // the description and then the chip label again.
-                            modifier = Modifier.clearAndSetSemantics {
+                            // Plain semantics, NOT clearAndSetSemantics: the
+                            // latter clears the whole subtree, including the
+                            // chip's own click action, leaving it announced
+                            // but not operable in TalkBack. The cost is that
+                            // the description and the label are both read —
+                            // verbose, but the chip still works.
+                            modifier = Modifier.semantics {
                                 contentDescription = addContentDescription
                             },
                         )
