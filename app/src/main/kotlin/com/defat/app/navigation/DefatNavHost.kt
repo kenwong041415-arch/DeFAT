@@ -12,6 +12,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.defat.app.StartDestination
+import com.defat.app.ui.history.HistoryRoute
 import com.defat.app.ui.home.HomeRoute
 import com.defat.app.ui.meal.MealEditorRoute
 import com.defat.app.ui.onboarding.ActivityRoute
@@ -91,6 +92,12 @@ fun DefatNavHost(
                 onLogWeight = { navController.navigate(Routes.WEIGHT_LOG) },
                 onOpenHistory = { navController.navigate(Routes.HISTORY) },
                 onOpenProfile = { navController.navigate(Routes.PROFILE) },
+            )
+        }
+        composable(Routes.HISTORY) {
+            HistoryRoute(
+                onEditMeal = { mealId -> navController.navigate(Routes.mealEdit(mealId)) },
+                onBack = { navController.popBackStack() },
             )
         }
         composable(Routes.MEAL_ADD) {
