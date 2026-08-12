@@ -52,9 +52,12 @@ Android imports.
   (`manual` | `healthconnect`).
 - `users/{uid}/days/{date}` — cached daily rollup: bmr, tdee, activeKcal,
   steps, intakeKcal, protein/carbs/fatG, balance, status comment.
-- `users/{uid}/meals/{mealId}` — timestamp, type (photo|text|label|manual),
-  photoRef, aiEstimate {kcal, proteinG, carbsG, fatG, confidence, items[]},
+- `users/{uid}/meals/{mealId}` — timestamp, mealType (breakfast|lunch|
+  afternoonTea|dinner|snack), type (photo|text|label|manual), photoRef,
+  aiEstimate {kcal, proteinG, carbsG, fatG, confidence, items[]},
   userOverride {…}, finalValues {…}.
+  `mealType` was added in Phase 1.6 and already exists on-device (Room v2);
+  Phase 1.5 sync must carry it.
 - `users/{uid}/feedback/{id}` — generated comments, trainer notes.
 
 Rule of thumb: the app always trusts `finalValues` (user-confirmed), never
