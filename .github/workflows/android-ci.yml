@@ -45,6 +45,24 @@ jobs:
       - name: Build debug APK
         run: ./gradlew --no-daemon :app:assembleDebug
 
+      - name: Upload exported Room schemas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: room-schemas
+          path: core-data/schemas/**
+          if-no-files-found: error
+          retention-days: 14
+      # TODO(phase1.6 M-3, deferred): once authentic 1.json and 2.json are
+      # committed (downloaded from this artifact and committed verbatim —
+      # see docs/plans/phase1.6-ui-revision-plan.md §3 R2 and §15), add the
+      # permanent drift guard here:
+      #   - name: Fail if the exported Room schema drifts from the committed one
+      #     run: git diff --exit-code -- core-data/schemas
+      # Adding it now would fail every run, since no schema files are
+      # committed yet in this PR (the CI artifact download step cannot run
+      # from this dev container).
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:

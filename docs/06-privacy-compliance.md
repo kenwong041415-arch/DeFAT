@@ -51,8 +51,18 @@ every phase; new data collection requires updating this doc first.
   tests (Firebase emulator) in Phase 1.
 - Claude API key in Secret Manager only; Cloud Functions enforce auth +
   quota (`docs/05`).
-- No secrets, keystores, or `google-services.json` with production keys
-  committed to git (`.gitignore` them; keep a `google-services.example.json`).
+- No secrets, release keystores, or `google-services.json` with production
+  keys committed to git (`.gitignore` them; keep a
+  `google-services.example.json`).
+- **Deliberate exception:** `app/debug.keystore` *is* committed. It holds the
+  standard `android`/`android` debug credentials, carries no secret value and
+  can never sign a Play release. Without it, every CI run signs the test APK
+  with a fresh random key, Android refuses to install over the previous build,
+  and the tester has to uninstall — wiping their logged health data, which
+  `android:allowBackup="false"` makes unrecoverable. Committing it protects
+  user data rather than exposing it. The **release** keystore is a different
+  matter: it must never be committed and will live in GitHub Actions secrets
+  from Phase 5.
 
 ## Medical disclaimer
 

@@ -15,6 +15,11 @@ import kotlinx.coroutines.flow.map
 /**
  * The day rollup is computed on demand from the profile and that day's
  * meals — no cache (D2 in the Phase 1 plan).
+ *
+ * Despite the name, [invoke] works for any [LocalDate], not just today —
+ * History (Phase 1.6) passes a past date. The target it computes always
+ * reflects the *current* profile, not a snapshot from that day (plan
+ * §2 E18); a per-day target snapshot is deferred to the Phase 4 trend engine.
  */
 class ObserveTodayDashboardUseCase @Inject constructor(
     private val profileRepository: ProfileRepository,

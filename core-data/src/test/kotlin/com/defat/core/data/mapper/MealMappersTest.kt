@@ -3,6 +3,7 @@ package com.defat.core.data.mapper
 import com.defat.core.data.db.entity.MealEntity
 import com.defat.core.domain.model.Meal
 import com.defat.core.domain.model.MealSource
+import com.defat.core.domain.model.MealType
 import java.time.Instant
 import java.time.LocalDate
 import kotlin.test.assertEquals
@@ -84,5 +85,42 @@ class MealMappersTest {
             updatedAtMillis = 0L,
         )
         assertEquals(MealSource.MANUAL, entity.toDomain().source)
+    }
+
+    @Test
+    fun `mealType round-trips`() {
+        val meal = Meal(
+            id = "meal-3",
+            loggedAt = Instant.parse("2026-03-15T08:30:00Z"),
+            date = LocalDate.of(2026, 3, 15),
+            name = "Afternoon snack",
+            kcal = 200.0,
+            proteinG = 5.0,
+            carbsG = 30.0,
+            fatG = 6.0,
+            mealType = MealType.AFTERNOON_TEA,
+        )
+
+        val entity = meal.toEntity()
+        assertEquals("AFTERNOON_TEA", entity.mealType)
+        assertEquals(MealType.AFTERNOON_TEA, entity.toDomain().mealType)
+    }
+
+    @Test
+    fun `an unknown mealType name falls back to SNACK`() {
+        val entity = MealEntity(
+            id = "m",
+            loggedAtMillis = 0L,
+            date = "2026-01-01",
+            name = "n",
+            kcal = 0.0,
+            proteinG = 0.0,
+            carbsG = 0.0,
+            fatG = 0.0,
+            source = MealSource.MANUAL.name,
+            updatedAtMillis = 0L,
+            mealType = "宵夜",
+        )
+        assertEquals(MealType.SNACK, entity.toDomain().mealType)
     }
 }

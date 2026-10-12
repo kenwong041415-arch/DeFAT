@@ -26,6 +26,11 @@ class MealRepositoryImpl @Inject constructor(
             .map { entities -> entities.map { it.toDomain() } }
             .flowOn(io)
 
+    override fun recentMeals(limit: Int): Flow<List<Meal>> =
+        mealDao.observeRecent(limit)
+            .map { entities -> entities.map { it.toDomain() } }
+            .flowOn(io)
+
     override suspend fun mealById(id: String): Meal? = withContext(io) {
         mealDao.byId(id)?.toDomain()
     }

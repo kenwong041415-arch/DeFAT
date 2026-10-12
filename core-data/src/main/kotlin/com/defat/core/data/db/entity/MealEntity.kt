@@ -1,5 +1,6 @@
 package com.defat.core.data.db.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -18,4 +19,12 @@ data class MealEntity(
     val updatedAtMillis: Long,
     val remoteId: String? = null, // D8 — Phase 1.5 sync
     val pendingSync: Boolean = true, // D8
+    /**
+     * MealType.name. The column default MUST stay in sync with the DEFAULT in
+     * MealMigrations.MIGRATION_1_2_STATEMENTS — Room compares the declared
+     * default against the database's and throws at launch if they differ
+     * (plan §3 R4).
+     */
+    @ColumnInfo(defaultValue = "SNACK")
+    val mealType: String = "SNACK",
 )

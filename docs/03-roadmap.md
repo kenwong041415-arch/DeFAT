@@ -37,6 +37,31 @@ What actually shipped:
 - **Exit test**: owner creates own profile, sees a sensible daily target,
   logs a manual meal.
 
+## Phase 1.6 — UI revision + meal types
+
+Implemented per [`docs/plans/phase1.6-ui-revision-plan.md`](plans/phase1.6-ui-revision-plan.md)
+(Opus plan, Sonnet build). Unplanned in the original roadmap: it exists
+because the owner installed the Phase 1 build, confirmed the metabolism math,
+and reported that the home screen was cluttered and that meals needed to be
+split by meal type.
+
+- Home rebuilt to the owner-approved "coach" layout: ring, three compact
+  macro tiles, meals grouped by meal type with per-type subtotals. The
+  full-width macro bars are gone — at zero they read as full, which is what
+  the owner found confusing.
+- Five meal types (早餐 / 午餐 / 下午茶 / 晚餐 / 小食), inferred from the clock
+  when a meal is created and back-filled onto existing rows by a Room v1 → v2
+  migration.
+- Navigation drawer; weight logging moves off Home into it. A new History
+  screen shows any past day. 進度圖表 appears disabled — it is Phase 4.
+- Meal editor: meal-type chips, working date/time pickers, a frequent-food
+  quick-add list, and a block on saving a 0-kcal meal.
+- Fixed pine/jade brand theme; Material You dynamic colour removed.
+- A stable debug keystore is committed so test builds install over each other
+  instead of forcing an uninstall that wipes the tester's data (`docs/06`).
+- **Exit test**: owner reads their macro standing at a glance, logs a meal at
+  the right meal type in under 20 seconds, and finds yesterday in 歷史記錄.
+
 ## Phase 2 — Wearables via Health Connect
 
 - Health Connect permissions flow + per-brand onboarding guides

@@ -11,6 +11,10 @@ interface MealDao {
     @Query("SELECT * FROM meals WHERE date = :date ORDER BY loggedAtMillis ASC")
     fun observeByDate(date: String): Flow<List<MealEntity>>
 
+    /** Newest first; the frequent-food ranking is done in :core-domain. */
+    @Query("SELECT * FROM meals ORDER BY loggedAtMillis DESC LIMIT :limit")
+    fun observeRecent(limit: Int): Flow<List<MealEntity>>
+
     @Query("SELECT * FROM meals WHERE id = :id")
     suspend fun byId(id: String): MealEntity?
 

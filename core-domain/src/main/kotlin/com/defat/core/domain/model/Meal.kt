@@ -16,4 +16,11 @@ data class Meal(
     val carbsG: Double,
     val fatG: Double,
     val source: MealSource = MealSource.MANUAL,
+    /**
+     * Which of the five daily meals this belongs to. Defaults to SNACK only so
+     * that test and preview construction sites keep compiling; production code
+     * always sets it explicitly (MealEditorViewModel) or reads it back from the
+     * database (mappers).
+     */
+    val mealType: MealType = MealType.SNACK,
 )
