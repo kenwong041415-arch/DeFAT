@@ -20,7 +20,16 @@ data class ModifierGroup(
 
 object ModifierGroups {
 
-    /** docs/07 §6.3 order: 飯量, 肉款, 皮, 醬汁, 甜度, 奶, 牛油, 花生醬, 加配料. */
+    /**
+     * docs/07 §6.3 order: 飯量, 肉款, 皮, 醬汁, 甜度, 奶, 牛油, 花生醬, 糖漿,
+     * then the add-ons.
+     *
+     * Each add-on is its **own** group rather than one shared 加配料 group.
+     * §6.3 correction 3: one exclusive group made 加蛋 and 加午餐肉 mutually
+     * exclusive, and 餐蛋麵 with both is an ordinary order. Because the rule is
+     * one modifier per `groupId`, separate groups combine freely — no change to
+     * [ModifiedFoodCalculator] was needed.
+     */
     val ORDER: List<String> = listOf(
         "rice_amount",
         "meat_cut",
@@ -30,7 +39,10 @@ object ModifierGroups {
         "milk",
         "butter",
         "peanut_butter",
-        "add_ons",
+        "syrup",
+        "add_egg",
+        "add_luncheon_meat",
+        "add_veg",
     )
 
     /** The modifiers that may be attached to [item], one [ModifierGroup] per group, in §6.3 order. */

@@ -433,11 +433,19 @@ class FoodItemMigrationSqlTest {
                 }
             }
         }
+        // The five §6.3 corrections made in the PR B review are part of this
+        // expectation, not exceptions to it:
+        //   - peanut_butter_none -95 exists because 西多士's 495 base already
+        //     includes peanut butter (correction 1),
+        //   - syrup_add +120 is the §6.1 line item, not 215 (correction 2),
+        //   - each add-on is its own group so 加蛋 and 加午餐肉 combine
+        //     (correction 3).
         assertEquals(
             mapOf(
                 "rice_less" to -130.0, "rice_more" to 130.0, "meat_lean" to -120.0, "skin_off" to -90.0,
                 "sauce_none" to -100.0, "sauce_less" to -50.0, "sugar_none" to -48.0, "sugar_half" to -24.0,
-                "milk_none" to -80.0, "milk_less" to -40.0, "butter_none" to -100.0, "peanut_butter_add" to 95.0,
+                "milk_none" to -80.0, "milk_less" to -40.0, "butter_none" to -100.0,
+                "peanut_butter_add" to 95.0, "peanut_butter_none" to -95.0, "syrup_add" to 120.0,
                 "add_egg" to 72.0, "add_luncheon_meat" to 144.0, "add_veg" to 15.0,
             ),
             deltas,
