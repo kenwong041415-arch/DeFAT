@@ -272,14 +272,47 @@ in use. String keys and exact text:
 | `bmr_method_henry` | `Henry / Oxford (2005)` | `Henry／Oxford（2005）` |
 | `bmr_method_note_henry` | `Add your body fat %% for a more personal number.` | `加入體脂率，個數字會更貼你。` |
 
-**Correction (review pass): use a bare `%`, not `%%`.** The original text here
-told the implementer to escape it. That was wrong. `stringResource(id)` calls
-`getString(id)` with no arguments, which does no format substitution, so `%%`
-would render on screen as two literal percent signs. The repo already ships
-three no-argument strings containing a bare `%` — `body_fat_pct`,
-`body_fat_hint`, `summary_method_katch` — and they pass lint. §14's identical
-advice is wrong for the same reason; escape `%` only in strings that actually
-take format arguments.
+**Correction, in two rounds — the `%` rule is narrower than either guess.**
+
+The original text told the implementer to escape it as `%%`. The
+implementation pass pushed back: `stringResource(id)` calls `getString(id)`
+with no arguments, which does no format substitution, so `%%` renders on
+screen as two literal percent signs, and the repo already ships
+no-argument strings carrying a bare `%` that pass lint. That reasoning is
+right as far as it goes — but a bare `%` then failed CI, so **both guesses
+were wrong**. The actual rule:
+
+- A `%` is fine when followed by punctuation, or at the end of the string.
+  `Body fat %`, `body fat %)` and `body fat %,` all pass lint, which is why
+  the shipped precedents looked conclusive.
+- A `%` followed by an optional flag and then a **conversion character**
+  parses as a format specifier. `body fat % for` becomes `% f` — space is a
+  valid flag, `f` is the float conversion — so lint raises
+  `StringFormatInvalid`, and because that makes lint treat the string as a
+  format string while the zh-rHK translation has no specifier, it raises a
+  second consistency error. One bare `%` cost two lint errors.
+- `%%` is correct **only** in strings that actually take format arguments
+  (`goal_rate_safe` and friends, which do).
+
+So for a no-argument string: write `%` only where the next character cannot
+be read as a conversion character, otherwise **reword** (this plan's string
+now says "percentage"), or set `formatted="false"` on it. Rewording is
+preferred — it needs no attribute and usually reads better. §14's identical
+`%%` advice is wrong for the same reason.
+
+The cheap local check, since `:app` cannot be compiled here: after removing
+positional specifiers (`%1$d`) and literal `%%`, scan both string files for
+
+```
+%[-+ 0#(,]?\d*(\.\d+)?[bBhHsScCdoxXeEfgGaAtTn]
+```
+
+and confirm every hit is a string that genuinely takes arguments. The pattern
+allows **at most one** flag character on purpose: that is what matches lint's
+observed behaviour. `% f` (space flag, `f` conversion) is rejected, while the
+shipped `Target body fat % (optional)` — space, then `(`, then `o` — is not,
+because two flags before the conversion character do not parse. A looser
+pattern flags that long-shipped string and sends you editing working copy.
 
 ---
 

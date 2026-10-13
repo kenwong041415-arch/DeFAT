@@ -100,7 +100,10 @@
     <string name="bmr_method_katch">Katch-McArdle (uses your body fat %)</string>
     <string name="bmr_method_henry">Henry / Oxford (2005)</string>
     <string name="bmr_method_mifflin">Mifflin-St Jeor</string>
-    <string name="bmr_method_note_henry">Add your body fat % for a more personal number.</string>
+    <!-- Says "percentage", not "%": a bare % followed by a space and a letter
+         parses as a malformed format specifier ("% f") and lint rejects it.
+         See the Phase 1.7 plan §5.5 for the actual rule. -->
+    <string name="bmr_method_note_henry">Add your body fat percentage for a more personal number.</string>
 
     <string name="day_start_title">When does your day start?</string>
     <string name="day_start_helper">Meals logged before this time count towards the previous day.</string>
