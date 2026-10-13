@@ -19,9 +19,11 @@ class ComputeDailyTargetUseCase @Inject constructor() {
         profile: UserProfile,
         on: LocalDate,
         activeKcal: Double? = null,
+        /** The day's manually logged exercise (plan §10.1); 0 leaves the target exactly as before. */
+        exerciseKcal: Double = 0.0,
     ): DailyTarget {
         val bmr = BmrCalculator.bmr(profile, on)
-        val tdee = TdeeCalculator.tdee(bmr.kcal, profile.activityLevel, activeKcal)
+        val tdee = TdeeCalculator.tdee(bmr.kcal, profile.activityLevel, activeKcal, exerciseKcal)
         val target = CalorieTargetCalculator.target(tdee.kcal, profile.sex)
         val macros = MacroCalculator.macroTargets(target.kcal, profile.weightKg, profile.bodyFatPct)
         return DailyTarget(

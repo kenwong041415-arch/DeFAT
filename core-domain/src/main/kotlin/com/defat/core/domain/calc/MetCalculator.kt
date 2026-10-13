@@ -13,6 +13,9 @@ object MetCalculator {
 
 data class MetActivity(val key: String, val met: Double)
 
+/** One of the 輕 / 中 / 重 choices for weight training (plan §10.4). */
+data class WeightTrainingLevel(val key: String, val met: Double)
+
 /**
  * Curated MET table (docs/04 "Manual exercise fallback"). Keys are stable
  * string ids, also used as string-resource suffixes.
@@ -35,4 +38,17 @@ object MetTable {
     )
 
     fun metFor(key: String): Double? = ACTIVITIES.firstOrNull { it.key == key }?.met
+
+    /**
+     * docs/04 gives weight training as a 3.5-6 range. Rather than silently
+     * picking one number, the exercise sheet offers 輕 / 中 / 重 (plan §10.4).
+     * 中 is the existing "weight_training" row, so ACTIVITIES stays as it was.
+     */
+    val WEIGHT_TRAINING_LEVELS: List<WeightTrainingLevel> = listOf(
+        WeightTrainingLevel("weight_training_light", 3.5),
+        WeightTrainingLevel("weight_training", 5.0),
+        WeightTrainingLevel("weight_training_heavy", 6.0),
+    )
+
+    const val WEIGHT_TRAINING_KEY: String = "weight_training"
 }

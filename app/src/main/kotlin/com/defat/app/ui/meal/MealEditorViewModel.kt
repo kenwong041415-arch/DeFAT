@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.defat.app.ui.SelectedDayHolder
+import com.defat.app.ui.component.plainNumber
+import com.defat.app.ui.food.FoodSelection
 import com.defat.core.domain.calc.DayBoundary
 import com.defat.core.domain.calc.MealTypeInference
 import com.defat.core.domain.calc.FrequentFoodRanker
@@ -108,6 +110,8 @@ class MealEditorViewModel @Inject constructor(
                         date = DayBoundary.logicalDate(meal.loggedAt, clock.zone, dayStart),
                         mealType = meal.mealType,
                         mealTypeManuallySet = true,
+                        baseFoodId = meal.baseFoodId,
+                        modifierIds = meal.modifierIds,
                         isLoading = false,
                     )
                 }
@@ -123,9 +127,9 @@ class MealEditorViewModel @Inject constructor(
 
     fun setName(text: String) = update { it.copy(nameText = text) }
     fun setKcal(text: String) = update { it.copy(kcalText = text, kcalTouched = true) }
-    fun setProtein(text: String) = update { it.copy(proteinText = text) }
-    fun setCarbs(text: String) = update { it.copy(carbsText = text) }
-    fun setFat(text: String) = update { it.copy(fatText = text) }
+    fun setProtein(text: String) = update { it.copy(proteinText = text, macrosIncomplete = false) }
+    fun setCarbs(text: String) = update { it.copy(carbsText = text, macrosIncomplete = false) }
+    fun setFat(text: String) = update { it.copy(fatText = text, macrosIncomplete = false) }
     fun setDate(date: LocalDate) = update { it.copy(date = date) }
 
     fun setTime(time: LocalTime) = update { state ->
@@ -150,6 +154,32 @@ class MealEditorViewModel @Inject constructor(
             carbsText = food.carbsG.roundGrams().toString(),
             fatText = food.fatG.roundGrams().toString(),
             kcalTouched = true,
+            // A past meal's numbers, not a library row's: nothing to re-adjust.
+            baseFoodId = null,
+            modifierIds = emptyList(),
+            macrosIncomplete = false,
+        )
+    }
+
+    /**
+     * Fills the name and numbers from a 搵食物 / 點食法 choice and remembers the
+     * row and modifier ids so the meal can be re-adjusted later (plan §8.7).
+     * Like [applyFrequentFood] it leaves the meal-type choice alone.
+     *
+     * A macro the library does not publish becomes a blank field, never "0".
+     */
+    fun applyFoodSelection(selection: FoodSelection, english: Boolean) = update {
+        val totals = selection.totals
+        it.copy(
+            nameText = selection.displayName(english),
+            kcalText = totals.kcal.roundKcal().toString(),
+            proteinText = totals.proteinG?.let { grams -> plainNumber(grams, 1) } ?: "",
+            carbsText = totals.carbsG?.let { grams -> plainNumber(grams, 1) } ?: "",
+            fatText = totals.fatG?.let { grams -> plainNumber(grams, 1) } ?: "",
+            kcalTouched = true,
+            baseFoodId = selection.item.id,
+            modifierIds = selection.modifiers.map { modifier -> modifier.id },
+            macrosIncomplete = totals.proteinG == null || totals.carbsG == null || totals.fatG == null,
         )
     }
 
@@ -178,6 +208,8 @@ class MealEditorViewModel @Inject constructor(
             carbsG = state.carbs,
             fatG = state.fat,
             mealType = state.mealType,
+            baseFoodId = state.baseFoodId,
+            modifierIds = state.modifierIds,
         )
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
@@ -203,6 +235,7 @@ class MealEditorViewModel @Inject constructor(
     }
 
     private fun hasMacroMismatch(state: MealEditorUiState): Boolean {
+        if (state.macrosIncomplete) return false
         val kcal = state.kcal ?: return false
         val macroSum = NutritionConstants.KCAL_PER_G_PROTEIN * state.protein +
             NutritionConstants.KCAL_PER_G_CARB * state.carbs +

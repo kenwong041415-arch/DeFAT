@@ -149,7 +149,6 @@
     <string name="meal_calc_from_macros">Calculate calories from macros</string>
     <string name="meal_macro_mismatch">Your calories and macros don\'t match — please check.</string>
     <string name="meal_delete_confirm">Delete this meal?</string>
-    <string name="meal_frequent_title">Foods you log often</string>
     <string name="meal_frequent_chip">%1$s · %2$d kcal</string>
     <string name="meal_frequent_add">Fill in %1$s</string>
     <string name="meal_kcal_required">Enter the calories — it has to be more than 0.</string>
@@ -164,4 +163,125 @@
     <string name="error_required">Required</string>
     <string name="error_min_age_18">DeFAT is for adults (18+). Please ask your trainer for guidance.</string>
     <string name="error_out_of_range">Enter a value between %1$s and %2$s</string>
+
+    <!-- ===== Phase 1.7 PR B: 食物庫 / 點食法 (plan §8) ===== -->
+    <string name="food_find_label">Find food</string>
+    <string name="food_frequent_title">Foods you log often</string>
+    <string name="food_no_results">Nothing in the library matches.</string>
+    <string name="food_manual_entry">Can\'t find it? Add your own</string>
+    <string name="food_range_kcal">%1$d–%2$d kcal</string>
+    <string name="food_badge_approx">Approx.</string>
+    <string name="food_badge_estimate">Estimate</string>
+    <string name="food_badge_trainer">Trainer</string>
+    <string name="food_badge_custom">Custom</string>
+    <string name="food_category_tea_restaurant">Cha chaan teng</string>
+    <string name="food_category_dim_sum">Dim sum</string>
+    <string name="food_category_roast_rice">Roast meat rice</string>
+    <string name="food_category_noodle">Noodles</string>
+    <string name="food_category_fast_food">Fast food</string>
+    <string name="food_category_drink">Drinks</string>
+    <string name="food_category_staple">Staples</string>
+    <string name="food_category_snack">Snacks</string>
+    <string name="food_group_rice_amount">Rice</string>
+    <string name="food_group_meat_cut">Cut of meat</string>
+    <string name="food_group_skin">Skin</string>
+    <string name="food_group_sauce">Sauce</string>
+    <string name="food_group_sweetness">Sweetness</string>
+    <string name="food_group_milk">Milk</string>
+    <string name="food_group_butter">Butter</string>
+    <string name="food_group_peanut_butter">Peanut butter</string>
+    <string name="food_group_add_ons">Add-ons</string>
+    <string name="food_default_normal">Regular</string>
+    <string name="food_default_standard_cut">Standard cut</string>
+    <string name="food_default_none">None</string>
+    <string name="food_adjust_open">Adjust how it was made</string>
+    <string name="food_adjust_dish_line">%1$s · %2$s</string>
+    <string name="food_back_to_search">Back to results</string>
+    <string name="food_quantity_label">Pieces</string>
+    <string name="food_quantity_unit">pieces</string>
+    <string name="food_quantity_decrease">One piece fewer</string>
+    <string name="food_quantity_increase">One piece more</string>
+    <string name="food_arith_heading">How the number adds up</string>
+    <string name="food_arith_base">Base: %1$s</string>
+    <string name="food_arith_clamped">Held at 0 kcal; it cannot go below zero.</string>
+    <string name="food_option_selected">%1$s: %2$s, selected</string>
+    <string name="food_option_unselected">%1$s: %2$s</string>
+    <string name="food_macro_value">%1$s: %2$s g</string>
+    <string name="food_macro_unknown">%1$s: no number published</string>
+    <string name="food_macros_unknown">This food has no published number for some macros. Add them if you know them.</string>
+    <string name="food_log_button">Log</string>
+
+    <string name="food_editor_title">Food library</string>
+    <string name="food_editor_note">These are starting estimates from public sources. Your numbers replace them permanently.</string>
+    <string name="food_editor_items_heading">Foods</string>
+    <string name="food_editor_modifiers_heading">Adjustments</string>
+    <string name="food_editor_edit_title">Edit %1$s</string>
+    <string name="food_editor_delta_value">%1$s kcal</string>
+    <string name="food_editor_kcal_delta">Calories change (kcal)</string>
+    <string name="food_editor_protein_delta">Protein change (g)</string>
+    <string name="food_editor_carbs_delta">Carbs change (g)</string>
+    <string name="food_editor_fat_delta">Fat change (g)</string>
+    <string name="food_editor_blank_means_unknown">Leave a macro blank if you do not have the number.</string>
+
+    <!-- ===== Exercise (plan §10) ===== -->
+    <string name="exercise_title">Exercise</string>
+    <string name="exercise_section_total">Total %1$d kcal</string>
+    <string name="exercise_add">Add exercise</string>
+    <string name="exercise_empty">No exercise logged.</string>
+    <string name="exercise_entry_line">%1$s · %2$d min</string>
+    <string name="exercise_delete">Delete this exercise</string>
+    <string name="exercise_delete_confirm">Delete this exercise entry?</string>
+    <string name="exercise_activity_label">Activity</string>
+    <string name="exercise_activity_walking">Walking</string>
+    <string name="exercise_activity_jogging">Jogging</string>
+    <string name="exercise_activity_cycling_moderate">Cycling (moderate)</string>
+    <string name="exercise_activity_swimming">Swimming</string>
+    <string name="exercise_activity_weight_training">Weight training</string>
+    <string name="exercise_activity_weight_training_light">Weight training (light)</string>
+    <string name="exercise_activity_weight_training_heavy">Weight training (heavy)</string>
+    <string name="exercise_activity_hiit">HIIT</string>
+    <string name="exercise_activity_hiking">Hiking</string>
+    <string name="exercise_activity_badminton">Badminton</string>
+    <string name="exercise_activity_basketball">Basketball</string>
+    <string name="exercise_activity_yoga">Yoga</string>
+    <string name="exercise_level_label">Intensity</string>
+    <string name="exercise_level_light">Light</string>
+    <string name="exercise_level_medium">Medium</string>
+    <string name="exercise_level_heavy">Heavy</string>
+    <string name="exercise_level_chip">%1$s (MET %2$s)</string>
+    <string name="exercise_minutes">Minutes</string>
+    <string name="exercise_minutes_unit">min</string>
+    <string name="exercise_formula">MET × weight (kg) × hours = kcal</string>
+    <string name="exercise_inputs_line">MET %1$s · your weight %2$s kg</string>
+    <string name="exercise_formula_values">%1$s × %2$s × %3$s = %4$d kcal</string>
+    <string name="exercise_enter_minutes">Enter the minutes to see the numbers.</string>
+    <string name="exercise_target_note">Your usual training is already counted in your activity level. The day\'s target only rises when the exercise logged is more than that.</string>
+
+    <!-- ===== Water (plan §11) ===== -->
+    <string name="water_title">Water</string>
+    <string name="water_progress">%1$s / %2$s ml</string>
+    <string name="water_goal_hint">Suggested goal: 35 ml per kg of bodyweight.</string>
+    <string name="water_cup_filled">Cup %1$d, filled</string>
+    <string name="water_cup_empty">Cup %1$d</string>
+    <string name="water_custom_label">Other amount</string>
+    <string name="water_unit_ml">ml</string>
+    <string name="water_add">Add</string>
+
+    <!-- ===== Streak (plan §12) ===== -->
+    <string name="streak_chip">Days on plan: %1$d</string>
+
+    <!-- ===== 數據來源 (plan §13) ===== -->
+    <string name="sources_title">Where the numbers come from</string>
+    <string name="sources_intro">Every number in DeFAT has a stated source. This page says where each one comes from and how far to trust it.</string>
+    <string name="sources_bmr_title">Basal metabolic rate (BMR)</string>
+    <string name="sources_bmr_body">BMR is the energy your body uses at rest. When your body fat percentage is known, DeFAT uses Katch-McArdle. Otherwise it uses Henry / Oxford (2005). Using the Henry equations was the trainer\'s professional decision. No published study has compared them with Mifflin-St Jeor in a Chinese population yet, so treat the result as an estimate.</string>
+    <string name="sources_tdee_title">Daily energy use (TDEE)</string>
+    <string name="sources_tdee_body">TDEE is your BMR multiplied by the activity level you chose, which already includes your usual training. On days with logged exercise, DeFAT takes the higher of two calculations, so the same workout is never counted twice.</string>
+    <string name="sources_food_title">Food numbers</string>
+    <string name="sources_food_body">The official government food database could not be reached when this library was built, and the public lists we found disagree with each other by up to double. So every food is tagged: Approx. (standard composition values), Estimate (press or dietitian figures) or Trainer (the trainer\'s own numbers). The trainer\'s numbers replace all the others.</string>
+    <string name="sources_water_title">Water suggestion</string>
+    <string name="sources_water_body">The daily water suggestion is 35 ml for every kg of bodyweight, rounded down to the nearest 100 ml and never below 1,500 ml. It is a coaching rule of thumb, not a medical target.</string>
+    <string name="sources_days_title">When a day starts</string>
+    <string name="sources_days_body">A day starts at 04:00 unless you change it on the Me tab. A meal logged before that time counts towards the previous day. Changing the time moves no saved record; it only changes how days are grouped.</string>
+    <string name="sources_disclaimer_heading">Medical disclaimer</string>
 </resources>

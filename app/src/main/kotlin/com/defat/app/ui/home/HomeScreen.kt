@@ -3,11 +3,13 @@ package com.defat.app.ui.home
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
@@ -17,9 +19,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +44,8 @@ import com.defat.app.ui.component.MacroTileRow
 import com.defat.app.ui.component.MealTypeSections
 import com.defat.app.ui.component.WeekDateStrip
 import com.defat.app.ui.component.bmrMethodLabelRes
+import com.defat.app.ui.exercise.ExerciseEntryViewModel
+import com.defat.app.ui.exercise.ExerciseSheet
 import com.defat.app.ui.theme.DefatTheme
 import com.defat.core.domain.calc.MealGrouping
 import com.defat.core.domain.calc.WeekStrip
@@ -60,8 +66,17 @@ fun HomeRoute(
     onLogWeight: () -> Unit,
     onTabSelected: (DefatTab) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
+    exerciseViewModel: ExerciseEntryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val exerciseState by exerciseViewModel.uiState.collectAsStateWithLifecycle()
+    var showExerciseSheet by rememberSaveable { mutableStateOf(false) }
+
+    // The sheet closes itself once the entry has been written.
+    LaunchedEffect(Unit) {
+        exerciseViewModel.saved.collect { showExerciseSheet = false }
+    }
+
     HomeScreen(
         uiState = uiState,
         onAddMeal = onAddMeal,
@@ -70,8 +85,26 @@ fun HomeRoute(
         onSelectDay = viewModel::selectDay,
         onPreviousWeek = viewModel::previousWeek,
         onNextWeek = viewModel::nextWeek,
+        onAddExercise = {
+            exerciseViewModel.reset()
+            showExerciseSheet = true
+        },
+        onDeleteExercise = viewModel::deleteExercise,
+        onTapWaterCup = viewModel::tapWaterCup,
+        onAddWater = viewModel::addWater,
         onTabSelected = onTabSelected,
     )
+
+    if (showExerciseSheet) {
+        ExerciseSheet(
+            state = exerciseState,
+            onSelectActivity = exerciseViewModel::selectActivity,
+            onSelectWeightTrainingLevel = exerciseViewModel::selectWeightTrainingLevel,
+            onMinutesChange = exerciseViewModel::setMinutes,
+            onSave = exerciseViewModel::save,
+            onDismiss = { showExerciseSheet = false },
+        )
+    }
 }
 
 @Composable
@@ -83,6 +116,10 @@ fun HomeScreen(
     onSelectDay: (LocalDate) -> Unit,
     onPreviousWeek: () -> Unit,
     onNextWeek: () -> Unit,
+    onAddExercise: () -> Unit,
+    onDeleteExercise: (String) -> Unit,
+    onTapWaterCup: (Int) -> Unit,
+    onAddWater: (String) -> Boolean,
     onTabSelected: (DefatTab) -> Unit,
 ) {
     DefatTabScaffold(
@@ -96,11 +133,18 @@ fun HomeScreen(
                     Column {
                         Text(stringResource(R.string.home_title_today))
                         if (uiState is HomeUiState.Content) {
-                            Text(
-                                text = uiState.selectedDate.toString(),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = uiState.selectedDate.toString(),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                // 跟足計劃日數: a count, shown once there is one to show.
+                                if (uiState.streakDays > 0) {
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    StreakChip(days = uiState.streakDays)
+                                }
+                            }
                         }
                     }
                 },
@@ -122,6 +166,10 @@ fun HomeScreen(
                     onSelectDay = onSelectDay,
                     onPreviousWeek = onPreviousWeek,
                     onNextWeek = onNextWeek,
+                    onAddExercise = onAddExercise,
+                    onDeleteExercise = onDeleteExercise,
+                    onTapWaterCup = onTapWaterCup,
+                    onAddWater = onAddWater,
                 )
             }
         }
@@ -136,6 +184,10 @@ private fun HomeContent(
     onSelectDay: (LocalDate) -> Unit,
     onPreviousWeek: () -> Unit,
     onNextWeek: () -> Unit,
+    onAddExercise: () -> Unit,
+    onDeleteExercise: (String) -> Unit,
+    onTapWaterCup: (Int) -> Unit,
+    onAddWater: (String) -> Boolean,
     modifier: Modifier = Modifier,
 ) {
     var showMetabolismInfo by remember { mutableStateOf(false) }
@@ -234,6 +286,22 @@ private fun HomeContent(
             }
             MealTypeSections(groups = mealGroups, onEditMeal = onEditMeal)
 
+            SectionDivider()
+            ExerciseSection(
+                entries = content.exerciseEntries,
+                totalKcal = rollup.exerciseKcal,
+                onAdd = onAddExercise,
+                onDelete = onDeleteExercise,
+            )
+
+            SectionDivider()
+            WaterSection(
+                waterMl = content.waterMl,
+                goalMl = content.waterGoalMl,
+                onTapCup = onTapWaterCup,
+                onAddWater = onAddWater,
+            )
+
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = stringResource(
@@ -311,6 +379,10 @@ private fun HomeScreenPreview() {
                 weekDays = WeekStrip.cells(today, today, setOf(today.minusDays(1))),
                 previousWeekTarget = today.minusWeeks(1),
                 nextWeekTarget = null,
+                exerciseEntries = emptyList(),
+                waterMl = 1750,
+                waterGoalMl = 2800,
+                streakDays = 3,
             ),
             onAddMeal = {},
             onEditMeal = {},
@@ -318,6 +390,10 @@ private fun HomeScreenPreview() {
             onSelectDay = {},
             onPreviousWeek = {},
             onNextWeek = {},
+            onAddExercise = {},
+            onDeleteExercise = {},
+            onTapWaterCup = {},
+            onAddWater = { true },
             onTabSelected = {},
         )
     }

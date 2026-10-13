@@ -2,10 +2,12 @@ package com.defat.core.domain.fake
 
 import com.defat.core.domain.calc.DayBoundary
 import com.defat.core.domain.model.ActivityLevel
+import com.defat.core.domain.model.ExerciseEntry
 import com.defat.core.domain.model.Goal
 import com.defat.core.domain.model.Meal
 import com.defat.core.domain.model.Sex
 import com.defat.core.domain.model.UserProfile
+import com.defat.core.domain.repository.ExerciseRepository
 import com.defat.core.domain.repository.MealRepository
 import com.defat.core.domain.repository.ProfileRepository
 import com.defat.core.domain.repository.SettingsRepository
@@ -47,6 +49,20 @@ class FakeMealRepo(initial: List<Meal> = emptyList()) : MealRepository {
     override suspend fun delete(id: String) { state.value = state.value.filterNot { it.id == id } }
 }
 
+class FakeExerciseRepo(initial: List<ExerciseEntry> = emptyList()) : ExerciseRepository {
+    private val state = MutableStateFlow(initial)
+
+    override fun exerciseBetween(startInclusive: Instant, endExclusive: Instant): Flow<List<ExerciseEntry>> =
+        state.map { list ->
+            list.filter { it.loggedAt >= startInclusive && it.loggedAt < endExclusive }
+                .sortedBy { it.loggedAt }
+        }
+
+    override fun allExercise(): Flow<List<ExerciseEntry>> = state.map { it.sortedBy { e -> e.loggedAt } }
+    override suspend fun upsert(entry: ExerciseEntry) { state.value = state.value.filterNot { it.id == entry.id } + entry }
+    override suspend fun delete(id: String) { state.value = state.value.filterNot { it.id == id } }
+}
+
 class FakeSettingsRepo(initial: LocalTime = DayBoundary.DEFAULT_DAY_START) : SettingsRepository {
     private val state = MutableStateFlow(initial)
     override val dayStart: Flow<LocalTime> = state
@@ -78,4 +94,14 @@ fun testMeal(id: String, loggedAt: Instant, kcal: Double = 500.0): Meal = Meal(
     proteinG = 10.0,
     carbsG = 10.0,
     fatG = 10.0,
+)
+
+fun testExercise(id: String, loggedAt: Instant, kcal: Double): ExerciseEntry = ExerciseEntry(
+    id = id,
+    loggedAt = loggedAt,
+    activityKey = "weight_training",
+    met = 5.0,
+    minutes = 60,
+    weightKgAtTime = 80.0,
+    kcal = kcal,
 )

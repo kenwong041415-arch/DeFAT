@@ -7,6 +7,8 @@ import com.defat.core.domain.model.MealType
 import java.time.Instant
 import java.time.LocalDate
 
+private const val MODIFIER_ID_SEPARATOR = ","
+
 fun Meal.toEntity(updatedAtMillis: Long = System.currentTimeMillis()): MealEntity = MealEntity(
     id = id,
     loggedAtMillis = loggedAt.toEpochMilli(),
@@ -19,6 +21,9 @@ fun Meal.toEntity(updatedAtMillis: Long = System.currentTimeMillis()): MealEntit
     source = source.name,
     updatedAtMillis = updatedAtMillis,
     mealType = mealType.name,
+    baseFoodId = baseFoodId,
+    // Null, not "", for a typed meal: the column is nullable (plan §8.7).
+    modifierIds = modifierIds.takeIf { it.isNotEmpty() }?.joinToString(MODIFIER_ID_SEPARATOR),
 )
 
 fun MealEntity.toDomain(): Meal = Meal(
@@ -35,4 +40,10 @@ fun MealEntity.toDomain(): Meal = Meal(
     // Unknown enum name falls back to SNACK rather than throwing, matching the
     // existing MealSource behaviour.
     mealType = runCatching { MealType.valueOf(this.mealType) }.getOrDefault(MealType.SNACK),
+    baseFoodId = baseFoodId,
+    modifierIds = modifierIds
+        ?.split(MODIFIER_ID_SEPARATOR)
+        ?.map { it.trim() }
+        ?.filter { it.isNotEmpty() }
+        .orEmpty(),
 )

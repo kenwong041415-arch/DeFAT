@@ -45,6 +45,12 @@ object NutritionConstants {
     // docs/04 — TDEE: wearable mode "TDEE = BMR x 1.1 (NEAT/TEF baseline) + activeEnergy"
     const val NEAT_TEF_BASELINE = 1.1 // docs/04 wearable mode; tune with owner
 
+    // Phase 1.7 plan §11 — water goal: 35 ml per kg, rounded down to 100 ml,
+    // never below 1500 ml. A common coaching heuristic, not a clinical target.
+    const val WATER_ML_PER_KG = 35.0
+    const val WATER_GOAL_STEP_ML = 100
+    const val WATER_GOAL_MIN_ML = 1500
+
     // docs/04 — Calorie target: "Default deficit: 20% below TDEE"
     const val DEFAULT_DEFICIT_FRACTION = 0.20
 

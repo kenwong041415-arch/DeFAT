@@ -27,4 +27,14 @@ data class MealEntity(
      */
     @ColumnInfo(defaultValue = "SNACK")
     val mealType: String = "SNACK",
+    /**
+     * The 食物庫 row this meal was picked from (plan §8.7), nullable because a
+     * typed meal has none. Deliberately no defaultValue: the column is added by
+     * `ALTER TABLE ... ADD COLUMN baseFoodId TEXT` with no DEFAULT, so there is
+     * nothing for Room to compare. The meal's numbers above are its own and are
+     * never recomputed from this row.
+     */
+    val baseFoodId: String? = null,
+    /** Comma-separated modifier ids from 點食法; null for a typed meal. */
+    val modifierIds: String? = null,
 )

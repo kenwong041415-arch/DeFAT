@@ -10,13 +10,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
@@ -35,15 +36,19 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -52,8 +57,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.defat.app.R
 import com.defat.app.ui.component.DecimalField
 import com.defat.app.ui.component.mealTypeLabel
+import com.defat.app.ui.food.FoodLibrarySheet
+import com.defat.app.ui.food.FoodLibraryViewModel
 import com.defat.app.ui.theme.DefatTheme
-import com.defat.core.domain.calc.roundKcal
+import com.defat.core.domain.calc.FoodSearch
 import com.defat.core.domain.model.FrequentFood
 import com.defat.core.domain.model.MealType
 import java.time.Instant
@@ -68,8 +75,18 @@ fun MealEditorRoute(
     mealId: String?,
     onDone: () -> Unit,
     viewModel: MealEditorViewModel = hiltViewModel(),
+    foodViewModel: FoodLibraryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val foodState by foodViewModel.uiState.collectAsStateWithLifecycle()
+    var showFoodSheet by rememberSaveable { mutableStateOf(false) }
+    // Bumped when a row with an unexplained range is picked, so the calories
+    // field takes focus and the student can overwrite the pre-filled midpoint.
+    var focusKcalSignal by remember { mutableIntStateOf(0) }
+
+    // Meal names are stored in the language the student was using when they logged.
+    val english = LocalConfiguration.current.locales[0].language != "zh"
+    val currentEnglish by rememberUpdatedState(english)
 
     LaunchedEffect(Unit) {
         viewModel.eventFlow.collectLatest { event ->
@@ -77,8 +94,20 @@ fun MealEditorRoute(
         }
     }
 
+    // A choice confirmed in the 搵食物 sheet fills the form and closes the sheet.
+    LaunchedEffect(Unit) {
+        foodViewModel.selections.collectLatest { selection ->
+            viewModel.applyFoodSelection(selection, currentEnglish)
+            if (selection.modifiers.isEmpty() && FoodSearch.hasUnexplainedRange(selection.item)) {
+                focusKcalSignal++
+            }
+            showFoodSheet = false
+        }
+    }
+
     MealEditorScreen(
         uiState = uiState,
+        focusKcalSignal = focusKcalSignal,
         onNameChange = viewModel::setName,
         onKcalChange = viewModel::setKcal,
         onProteinChange = viewModel::setProtein,
@@ -87,7 +116,18 @@ fun MealEditorRoute(
         onMealTypeChange = viewModel::setMealType,
         onDateSelected = viewModel::setDate,
         onTimeSelected = viewModel::setTime,
-        onApplyFrequentFood = viewModel::applyFrequentFood,
+        onOpenFoodLibrary = {
+            foodViewModel.reset()
+            showFoodSheet = true
+        },
+        onAdjustFood = {
+            val baseFoodId = uiState.baseFoodId
+            if (baseFoodId != null) {
+                foodViewModel.reset()
+                foodViewModel.startAdjust(baseFoodId, uiState.modifierIds)
+                showFoodSheet = true
+            }
+        },
         onCalculateKcalFromMacros = viewModel::calculateKcalFromMacros,
         onSave = viewModel::save,
         onRequestDelete = viewModel::requestDelete,
@@ -95,11 +135,35 @@ fun MealEditorRoute(
         onCancelDelete = viewModel::cancelDelete,
         onBack = onDone,
     )
+
+    if (showFoodSheet) {
+        FoodLibrarySheet(
+            uiState = foodState,
+            frequentFoods = uiState.frequentFoods,
+            english = english,
+            onQueryChange = foodViewModel::setQuery,
+            onCategoryChange = foodViewModel::setCategory,
+            onItemTapped = foodViewModel::onItemTapped,
+            onApplyFrequentFood = { food ->
+                viewModel.applyFrequentFood(food)
+                showFoodSheet = false
+            },
+            // 「搵唔到？自己加」: close the sheet and let the student type the numbers.
+            onEnterManually = { showFoodSheet = false },
+            onSelectModifier = foodViewModel::selectModifier,
+            onQuantityChange = foodViewModel::setQuantity,
+            onConfirm = foodViewModel::confirmAdjust,
+            onBackToSearch = foodViewModel::closeAdjust,
+            onDismiss = { showFoodSheet = false },
+        )
+    }
 }
 
 @Composable
 fun MealEditorScreen(
     uiState: MealEditorUiState,
+    /** Changes (and is above 0) when the calories field should take focus. */
+    focusKcalSignal: Int,
     onNameChange: (String) -> Unit,
     onKcalChange: (String) -> Unit,
     onProteinChange: (String) -> Unit,
@@ -108,7 +172,8 @@ fun MealEditorScreen(
     onMealTypeChange: (MealType) -> Unit,
     onDateSelected: (LocalDate) -> Unit,
     onTimeSelected: (LocalTime) -> Unit,
-    onApplyFrequentFood: (FrequentFood) -> Unit,
+    onOpenFoodLibrary: () -> Unit,
+    onAdjustFood: () -> Unit,
     onCalculateKcalFromMacros: () -> Unit,
     onSave: () -> Unit,
     onRequestDelete: () -> Unit,
@@ -118,6 +183,13 @@ fun MealEditorScreen(
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
+    val kcalFocusRequester = remember { FocusRequester() }
+    LaunchedEffect(focusKcalSignal) {
+        if (focusKcalSignal > 0) {
+            // The field may not be attached yet (e.g. the form is still loading).
+            runCatching { kcalFocusRequester.requestFocus() }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -176,34 +248,17 @@ fun MealEditorScreen(
                 }
             }
 
-            if (uiState.frequentFoods.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(20.dp))
-                Text(stringResource(R.string.meal_frequent_title), style = MaterialTheme.typography.titleSmall)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    uiState.frequentFoods.forEach { food ->
-                        val addContentDescription = stringResource(R.string.meal_frequent_add, food.name)
-                        AssistChip(
-                            onClick = { onApplyFrequentFood(food) },
-                            label = {
-                                Text(stringResource(R.string.meal_frequent_chip, food.name, food.kcal.roundKcal()))
-                            },
-                            // Plain semantics, NOT clearAndSetSemantics: the
-                            // latter clears the whole subtree, including the
-                            // chip's own click action, leaving it announced
-                            // but not operable in TalkBack. The cost is that
-                            // the description and the label are both read —
-                            // verbose, but the chip still works.
-                            modifier = Modifier.semantics {
-                                contentDescription = addContentDescription
-                            },
-                        )
-                    }
+            // 搵食物 replaces the P1.6 常用食物 row; 常用 is the first section of the sheet.
+            Spacer(modifier = Modifier.height(20.dp))
+            OutlinedButton(onClick = onOpenFoodLibrary, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Filled.Search, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.food_find_label))
+            }
+            // A meal logged from the library can be re-opened in 點食法 (plan §8.6 item 5).
+            if (uiState.baseFoodId != null) {
+                TextButton(onClick = onAdjustFood) {
+                    Text(stringResource(R.string.food_adjust_open))
                 }
             }
 
@@ -221,6 +276,7 @@ fun MealEditorScreen(
                 label = stringResource(R.string.meal_kcal),
                 suffix = stringResource(R.string.unit_kcal),
                 errorText = if (uiState.showKcalError) stringResource(R.string.meal_kcal_required) else null,
+                modifier = Modifier.focusRequester(kcalFocusRequester),
             )
             Spacer(modifier = Modifier.height(12.dp))
             DecimalField(
@@ -253,6 +309,13 @@ fun MealEditorScreen(
                 Text(
                     stringResource(R.string.meal_macro_mismatch),
                     color = MaterialTheme.colorScheme.tertiary,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            if (uiState.macrosIncomplete) {
+                Text(
+                    stringResource(R.string.food_macros_unknown),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
@@ -345,6 +408,7 @@ fun MealEditorScreen(
 private fun MealEditorScreenPreview() {
     DefatTheme {
         MealEditorScreen(
+            focusKcalSignal = 0,
             uiState = MealEditorUiState(
                 isLoading = false,
                 nameText = "Chicken and rice",
@@ -363,7 +427,8 @@ private fun MealEditorScreenPreview() {
             onMealTypeChange = {},
             onDateSelected = {},
             onTimeSelected = {},
-            onApplyFrequentFood = {},
+            onOpenFoodLibrary = {},
+            onAdjustFood = {},
             onCalculateKcalFromMacros = {},
             onSave = {},
             onRequestDelete = {},

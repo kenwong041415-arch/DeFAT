@@ -3,9 +3,13 @@ package com.defat.app.ui
 import androidx.lifecycle.SavedStateHandle
 import com.defat.app.fake.FakeMealRepository
 import com.defat.app.fake.FakeSettingsRepository
+import com.defat.app.fake.chaSiuModifiers
+import com.defat.app.fake.chaSiuRice
 import com.defat.app.fake.TestClock
 import com.defat.app.ui.SelectedDayHolder
+import com.defat.app.ui.food.FoodSelection
 import com.defat.app.ui.meal.MealEditorViewModel
+import com.defat.core.domain.calc.ModifiedFoodCalculator
 import com.defat.core.domain.model.FrequentFood
 import com.defat.core.domain.model.Meal
 import com.defat.core.domain.model.MealSource
@@ -247,5 +251,119 @@ class MealEditorViewModelTest {
         // Saving without touching the date or time must not move the meal.
         vm.save()
         assertEquals(late.loggedAt, mealRepository.lastUpserted?.loggedAt)
+    }
+
+    // ---- Phase 1.7 PR B: 搵食物 / 點食法 (plan §8.6, §8.7) ----
+
+    private fun leanNoSauceSelection(): FoodSelection {
+        val modifiers = chaSiuModifiers().filter { it.id == "meat_lean" || it.id == "sauce_none" }
+        return FoodSelection(
+            item = chaSiuRice(),
+            modifiers = modifiers,
+            quantity = 1,
+            totals = ModifiedFoodCalculator.apply(chaSiuRice(), modifiers),
+        )
+    }
+
+    @Test
+    fun `a library choice fills the form, leaves unpublished macros blank, and remembers its ids`() {
+        val vm = newViewModel(FakeMealRepository())
+        vm.setMealType(MealType.DINNER)
+
+        vm.applyFoodSelection(leanNoSauceSelection(), english = false)
+
+        val state = vm.uiState.value
+        assertEquals("叉燒飯（瘦、走汁）", state.nameText)
+        assertEquals("719", state.kcalText) // 939 - 120 - 100
+        assertEquals("", state.proteinText) // not "0": no source published it
+        assertEquals("", state.carbsText)
+        assertEquals("", state.fatText)
+        assertEquals("cha_siu_rice", state.baseFoodId)
+        assertEquals(setOf("meat_lean", "sauce_none"), state.modifierIds.toSet())
+        assertEquals(MealType.DINNER, state.mealType)
+        assertTrue(state.macrosIncomplete)
+        // Calories against missing macros is not a mismatch.
+        assertFalse(state.showMacroMismatchWarning)
+    }
+
+    @Test
+    fun `typing a macro after a library choice turns the mismatch check back on`() {
+        val vm = newViewModel(FakeMealRepository())
+        vm.applyFoodSelection(leanNoSauceSelection(), english = true)
+        assertEquals("Barbecued pork rice (Lean meat, No sauce)", vm.uiState.value.nameText)
+
+        vm.setProtein("30")
+        vm.setCarbs("80")
+        vm.setFat("15") // macro sum 575 against 719 kcal
+
+        assertFalse(vm.uiState.value.macrosIncomplete)
+        assertTrue(vm.uiState.value.showMacroMismatchWarning)
+    }
+
+    @Test
+    fun `saving a library meal stores its own numbers and the ids`() = runTest {
+        val mealRepository = FakeMealRepository()
+        val vm = newViewModel(mealRepository)
+        vm.applyFoodSelection(leanNoSauceSelection(), english = false)
+        vm.save()
+
+        val saved = mealRepository.lastUpserted!!
+        assertEquals(719.0, saved.kcal, 0.0)
+        assertEquals("cha_siu_rice", saved.baseFoodId)
+        assertEquals(setOf("meat_lean", "sauce_none"), saved.modifierIds.toSet())
+    }
+
+    @Test
+    fun `re-opening a library meal keeps its ids, and a later change to the library cannot touch its numbers`() = runTest {
+        val existing = Meal(
+            id = "meal-lib",
+            loggedAt = Instant.parse("2026-03-15T08:00:00Z"),
+            date = LocalDate.of(2026, 3, 15),
+            name = "叉燒飯（瘦）",
+            kcal = 819.0,
+            proteinG = 0.0,
+            carbsG = 0.0,
+            fatG = 0.0,
+            source = MealSource.MANUAL,
+            mealType = MealType.LUNCH,
+            baseFoodId = "cha_siu_rice",
+            modifierIds = listOf("meat_lean"),
+        )
+        val mealRepository = FakeMealRepository(listOf(existing))
+        val vm = newViewModel(mealRepository, mealId = "meal-lib")
+
+        assertEquals("cha_siu_rice", vm.uiState.value.baseFoodId)
+        assertEquals(listOf("meat_lean"), vm.uiState.value.modifierIds)
+
+        vm.setName("叉燒飯（瘦）改")
+        vm.save()
+
+        val saved = mealRepository.lastUpserted!!
+        assertEquals(819.0, saved.kcal, 0.0) // the meal's own number, as stored
+        assertEquals("cha_siu_rice", saved.baseFoodId)
+        assertEquals(listOf("meat_lean"), saved.modifierIds)
+    }
+
+    @Test
+    fun `a typed meal has no base food`() = runTest {
+        val mealRepository = FakeMealRepository()
+        val vm = newViewModel(mealRepository)
+        vm.setName("Oats")
+        vm.setKcal("300")
+        vm.save()
+
+        assertEquals(null, mealRepository.lastUpserted!!.baseFoodId)
+        assertEquals(emptyList(), mealRepository.lastUpserted!!.modifierIds)
+    }
+
+    @Test
+    fun `a frequent food replaces a library choice and drops its ids`() {
+        val vm = newViewModel(FakeMealRepository())
+        vm.applyFoodSelection(leanNoSauceSelection(), english = false)
+        vm.applyFrequentFood(FrequentFood("雞胸飯", 3, 520.0, 48.0, 52.0, 9.0))
+
+        assertEquals(null, vm.uiState.value.baseFoodId)
+        assertEquals(emptyList(), vm.uiState.value.modifierIds)
+        assertFalse(vm.uiState.value.macrosIncomplete)
     }
 }

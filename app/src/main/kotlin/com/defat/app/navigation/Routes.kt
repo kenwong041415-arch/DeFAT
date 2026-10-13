@@ -17,4 +17,6 @@ object Routes {
     fun mealEdit(id: String) = "meal/edit/$id"
     const val WEIGHT_LOG = "weight/log"
     const val PROFILE = "profile"
+    const val FOOD_LIBRARY = "profile/foods"
+    const val SOURCES = "profile/sources"
 }

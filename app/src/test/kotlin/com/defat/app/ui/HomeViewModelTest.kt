@@ -1,8 +1,10 @@
 package com.defat.app.ui
 
+import com.defat.app.fake.FakeExerciseRepository
 import com.defat.app.fake.FakeMealRepository
 import com.defat.app.fake.FakeProfileRepository
 import com.defat.app.fake.FakeSettingsRepository
+import com.defat.app.fake.FakeWaterRepository
 import com.defat.app.fake.TestClock
 import com.defat.app.ui.SelectedDayHolder
 import com.defat.app.ui.home.HomeUiState
@@ -10,11 +12,13 @@ import com.defat.app.ui.home.HomeViewModel
 import com.defat.core.domain.calc.roundGrams
 import com.defat.core.domain.calc.roundKcal
 import com.defat.core.domain.model.ActivityLevel
+import com.defat.core.domain.model.ExerciseEntry
 import com.defat.core.domain.model.Goal
 import com.defat.core.domain.model.Meal
 import com.defat.core.domain.model.MealSource
 import com.defat.core.domain.model.MealType
 import com.defat.core.domain.model.Sex
+import com.defat.core.domain.model.TdeeSource
 import com.defat.core.domain.model.UserProfile
 import com.defat.core.domain.usecase.ObserveTodayDashboardUseCase
 import java.time.Instant
@@ -87,16 +91,38 @@ class HomeViewModelTest {
         mealRepository: FakeMealRepository,
         settingsRepository: FakeSettingsRepository = FakeSettingsRepository(),
         selectedDay: SelectedDayHolder = SelectedDayHolder(),
+        exerciseRepository: FakeExerciseRepository = FakeExerciseRepository(),
+        waterRepository: FakeWaterRepository = FakeWaterRepository(),
     ): HomeViewModel {
         val observeTodayDashboard = ObserveTodayDashboardUseCase(
             profileRepository,
             mealRepository,
+            exerciseRepository,
             settingsRepository,
             com.defat.core.domain.usecase.ComputeDailyTargetUseCase(),
             TestClock.clock,
         )
-        return HomeViewModel(observeTodayDashboard, mealRepository, settingsRepository, selectedDay, TestClock.clock)
+        return HomeViewModel(
+            observeTodayDashboard,
+            mealRepository,
+            exerciseRepository,
+            waterRepository,
+            profileRepository,
+            settingsRepository,
+            selectedDay,
+            TestClock.clock,
+        )
     }
+
+    private fun exerciseAt(date: LocalDate, hour: Int, kcal: Double) = ExerciseEntry(
+        id = "ex-$date-$hour",
+        loggedAt = LocalDateTime.of(date, LocalTime.of(hour, 0)).atZone(TestClock.zone).toInstant(),
+        activityKey = "weight_training",
+        met = 5.0,
+        minutes = 60,
+        weightKgAtTime = 80.0,
+        kcal = kcal,
+    )
 
     /** A meal at [hour]:[minute] local time on calendar [date], in the test zone. */
     private fun mealAt(date: LocalDate, hour: Int, minute: Int, kcal: Double) = Meal(
@@ -287,5 +313,148 @@ class HomeViewModelTest {
         viewModel.nextWeek()
         runCurrent()
         assertEquals(TestClock.today, (viewModel.uiState.value as HomeUiState.Content).selectedDate)
+    }
+
+    // ---- Phase 1.7 PR B: exercise, water, streak (plan §15.8) ----
+
+    @Test
+    fun `exercise lands on the selected day, not today`() = runTest(testDispatcher) {
+        val yesterday = TestClock.today.minusDays(1)
+        val exercise = FakeExerciseRepository(listOf(exerciseAt(yesterday, 18, kcal = 1500.0)))
+        val viewModel = newViewModel(FakeProfileRepository(goldenProfile()), FakeMealRepository(), exerciseRepository = exercise)
+
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+
+        val today = viewModel.uiState.value as HomeUiState.Content
+        assertTrue(today.exerciseEntries.isEmpty())
+        assertEquals(0, today.dayRollup.exerciseKcal.roundKcal())
+        // No exercise today: the target is exactly the multiplier target (plan §10.1).
+        assertEquals(TdeeSource.ACTIVITY_MULTIPLIER, today.dayRollup.target.tdeeSource)
+        assertEquals(2582.3, today.dayRollup.target.tdeeKcal, 1e-6)
+
+        viewModel.selectDay(yesterday)
+        runCurrent()
+
+        val past = viewModel.uiState.value as HomeUiState.Content
+        assertEquals(1, past.exerciseEntries.size)
+        assertEquals(1500, past.dayRollup.exerciseKcal.roundKcal())
+        // 1666 x 1.1 + 1500 beats 1666 x 1.55.
+        assertEquals(TdeeSource.MANUAL_EXERCISE, past.dayRollup.target.tdeeSource)
+        assertEquals(1666.0 * 1.1 + 1500.0, past.dayRollup.target.tdeeKcal, 1e-6)
+    }
+
+    @Test
+    fun `water lands on the selected day, with a weight-based goal`() = runTest(testDispatcher) {
+        val yesterday = TestClock.today.minusDays(1)
+        val water = FakeWaterRepository(mapOf(TestClock.today to 500, yesterday to 1750))
+        val viewModel = newViewModel(FakeProfileRepository(goldenProfile()), FakeMealRepository(), waterRepository = water)
+
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+        val today = viewModel.uiState.value as HomeUiState.Content
+        assertEquals(500, today.waterMl)
+        assertEquals(2800, today.waterGoalMl) // 80 kg x 35 ml
+
+        viewModel.selectDay(yesterday)
+        runCurrent()
+        assertEquals(1750, (viewModel.uiState.value as HomeUiState.Content).waterMl)
+    }
+
+    @Test
+    fun `tapping a cup writes to the selected day`() = runTest(testDispatcher) {
+        val yesterday = TestClock.today.minusDays(1)
+        val water = FakeWaterRepository(mapOf(yesterday to 500))
+        val viewModel = newViewModel(FakeProfileRepository(goldenProfile()), FakeMealRepository(), waterRepository = water)
+
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+        viewModel.selectDay(yesterday)
+        runCurrent()
+
+        viewModel.tapWaterCup(4)
+        runCurrent()
+        assertEquals(1000, (viewModel.uiState.value as HomeUiState.Content).waterMl)
+
+        // Tapping the last filled cup removes one.
+        viewModel.tapWaterCup(4)
+        runCurrent()
+        assertEquals(750, (viewModel.uiState.value as HomeUiState.Content).waterMl)
+
+        // Today is untouched.
+        viewModel.selectDay(TestClock.today)
+        runCurrent()
+        assertEquals(0, (viewModel.uiState.value as HomeUiState.Content).waterMl)
+    }
+
+    @Test
+    fun `a typed amount is added, and invalid text is refused`() = runTest(testDispatcher) {
+        val viewModel = newViewModel(FakeProfileRepository(goldenProfile()), FakeMealRepository())
+
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+
+        assertTrue(viewModel.addWater("330"))
+        runCurrent()
+        assertEquals(330, (viewModel.uiState.value as HomeUiState.Content).waterMl)
+
+        assertFalse(viewModel.addWater(""))
+        assertFalse(viewModel.addWater("abc"))
+        assertFalse(viewModel.addWater("0"))
+        assertFalse(viewModel.addWater("-5"))
+        runCurrent()
+        assertEquals(330, (viewModel.uiState.value as HomeUiState.Content).waterMl)
+    }
+
+    @Test
+    fun `the streak counts consecutive logged days back from today`() = runTest(testDispatcher) {
+        val meals = FakeMealRepository(
+            listOf(
+                mealAt(TestClock.today, 12, 0, kcal = 500.0),
+                mealAt(TestClock.today.minusDays(1), 12, 0, kcal = 500.0),
+                mealAt(TestClock.today.minusDays(2), 12, 0, kcal = 500.0),
+                // a gap on day -3
+                mealAt(TestClock.today.minusDays(4), 12, 0, kcal = 500.0),
+            ),
+        )
+        val viewModel = newViewModel(FakeProfileRepository(goldenProfile()), meals)
+
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+        assertEquals(3, (viewModel.uiState.value as HomeUiState.Content).streakDays)
+
+        // The streak is about today, whichever day is being looked at.
+        viewModel.selectDay(TestClock.today.minusDays(4))
+        runCurrent()
+        assertEquals(3, (viewModel.uiState.value as HomeUiState.Content).streakDays)
+    }
+
+    @Test
+    fun `yesterday still counts before the first meal of today`() = runTest(testDispatcher) {
+        val meals = FakeMealRepository(listOf(mealAt(TestClock.today.minusDays(1), 12, 0, kcal = 500.0)))
+        val viewModel = newViewModel(FakeProfileRepository(goldenProfile()), meals)
+
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+
+        assertEquals(1, (viewModel.uiState.value as HomeUiState.Content).streakDays)
+    }
+
+    @Test
+    fun `a deleted exercise entry disappears`() = runTest(testDispatcher) {
+        val entry = exerciseAt(TestClock.today, 9, kcal = 300.0)
+        val viewModel = newViewModel(
+            FakeProfileRepository(goldenProfile()),
+            FakeMealRepository(),
+            exerciseRepository = FakeExerciseRepository(listOf(entry)),
+        )
+
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+        assertEquals(1, (viewModel.uiState.value as HomeUiState.Content).exerciseEntries.size)
+
+        viewModel.deleteExercise(entry.id)
+        runCurrent()
+        assertTrue((viewModel.uiState.value as HomeUiState.Content).exerciseEntries.isEmpty())
     }
 }

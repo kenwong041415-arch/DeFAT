@@ -75,7 +75,7 @@ class ProfileViewModel @Inject constructor(
                 existingProfile = profile,
                 form = current,
                 dailyTarget = target,
-                appVersion = "0.3.0-phase1.7a",
+                appVersion = "0.3.0-phase1.7b",
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProfileUiState.Loading)
