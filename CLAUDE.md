@@ -19,6 +19,7 @@ if a decision must change, update the doc in the same PR and explain why.
 | `docs/04-health-metabolism.md` | BMR/TDEE formulas, wearable data rules, double-counting guard |
 | `docs/05-ai-nutrition.md` | Food photo / label / menu AI pipeline, prompts, cost control |
 | `docs/06-privacy-compliance.md` | Health-data privacy, PDPO, Google Play health policy |
+| `docs/07-hk-food-library.md` | Where HK food numbers come from, confidence tiers, seed list |
 
 ## Model roles (set by the project owner)
 

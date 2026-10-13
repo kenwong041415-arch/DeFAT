@@ -62,6 +62,50 @@ split by meal type.
 - **Exit test**: owner reads their macro standing at a glance, logs a meal at
   the right meal type in under 20 seconds, and finds yesterday in 歷史記錄.
 
+## Phase 1.7 — CaLoMei-aligned structure (two PRs)
+
+Planned in [`docs/plans/phase1.7-implementation-plan.md`](plans/phase1.7-implementation-plan.md)
+(Opus plan, Sonnet build). Unplanned in the original roadmap: the owner found
+a competitor app (CaLoMei), asked for the same structure, and said
+explicitly **語氣唔跟** — copy the structure, not the snarky tone.
+
+Ships as two PRs because the combined scope is too large for one review.
+
+**PR A — structure**
+
+- **BMR formula change**: Henry (2005) "Oxford" equations replace
+  Mifflin-St Jeor on the no-body-fat path, by the owner's decision as the
+  nutrition professional. Katch-McArdle is unchanged on the body-fat path —
+  the competitor's own displayed figure turned out to be Katch-McArdle too,
+  so following it meant changing nothing where it matters most (`docs/04`).
+- **Bottom navigation** (今日 / 歷史 / + / 進度 / 我). This **reverses the
+  P1.6 drawer decision** on the owner's instruction; the drawer is deleted.
+  P1.6's plan is left as written so the history stays legible.
+- Week date strip on Home; Home renders any of the last 7 days.
+- **Day-start time** setting (default 04:00) so a 2 a.m. snack counts to the
+  previous day. Invasive — it changes day bucketing everywhere.
+- Dark-first theme, keeping DeFAT's pine/jade; no amber.
+- Profile wizard now requires age 18+.
+
+**PR B — logging features**
+
+- **食物庫** — a seeded, searchable, source-tagged, owner-editable food
+  table (`docs/07`). Not a table of asserted facts: the official CFS
+  database was unreachable and the public lists disagree by up to 2×, so
+  every row carries its source and confidence and the owner's corrections
+  are permanent.
+- Manual MET-based exercise logging, with the double-counting rule in
+  `docs/04` that stops it inflating the day's target.
+- Water tracking (35 ml/kg heuristic, owner to confirm).
+- Streak (跟足計劃日數) — a factual count, no engagement mechanics.
+- In-app 數據來源 page explaining, in Cantonese, where every number comes
+  from and how much to trust it.
+
+- **Exit test**: owner navigates entirely by the bottom bar, adds a food
+  from the library and sees its 「估算」 badge, corrects it and sees the
+  correction persist, logs a 45-minute session and sees the target rise
+  sensibly rather than double, and finds the 數據來源 page.
+
 ## Phase 2 — Wearables via Health Connect
 
 - Health Connect permissions flow + per-brand onboarding guides
