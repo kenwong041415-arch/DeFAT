@@ -68,16 +68,43 @@
     <string name="summary_floor_applied">已將目標調高至安全下限 %1$d 千卡。</string>
 
     <string name="home_title_today">今日</string>
-    <string name="nav_open_menu">開啟選單</string>
-    <string name="drawer_target_line">每日目標 %1$d 千卡</string>
-    <string name="drawer_charts">進度圖表</string>
-    <string name="drawer_coming_soon">稍後推出</string>
+    <string name="nav_today">今日</string>
+    <string name="nav_history">歷史</string>
+    <string name="nav_progress">進度</string>
+    <string name="nav_me">我</string>
+    <string name="action_add_meal">加一餐</string>
 
     <string name="history_title">歷史記錄</string>
     <string name="history_pick_date">揀日期</string>
-    <string name="history_prev_day">前一日</string>
-    <string name="history_next_day">下一日</string>
-    <string name="history_totals_title">嗰日總計</string>
+    <string name="history_empty">仲未有記錄，撳 + 加入第一餐。</string>
+    <string name="history_on_target">達標</string>
+    <string name="history_over_target">超標</string>
+
+    <string-array name="week_day_initials">
+        <item>一</item>
+        <item>二</item>
+        <item>三</item>
+        <item>四</item>
+        <item>五</item>
+        <item>六</item>
+        <item>日</item>
+    </string-array>
+    <string name="week_previous">上一週</string>
+    <string name="week_next">下一週</string>
+    <string name="week_day_has_entries">有記錄</string>
+
+    <string name="progress_title">進度</string>
+    <string name="progress_soon_heading">圖表稍後推出</string>
+    <string name="progress_soon_body">累積幾個星期記錄之後，呢一頁會顯示你嘅體重趨勢同每週變化。</string>
+
+    <string name="bmr_method_katch">Katch-McArdle（用你嘅體脂率）</string>
+    <string name="bmr_method_henry">Henry／Oxford（2005）</string>
+    <string name="bmr_method_mifflin">Mifflin-St Jeor</string>
+    <string name="bmr_method_note_henry">加入體脂率，個數字會更貼你。</string>
+
+    <string name="day_start_title">一日幾點開始</string>
+    <string name="day_start_helper">喺呢個時間之前記錄嘅餐，會算落前一日。</string>
+    <string name="day_start_helper_note">舊記錄唔會搬，只係分日嘅方式會變。</string>
 
     <string name="meal_type_breakfast">早餐</string>
     <string name="meal_type_lunch">午餐</string>
@@ -104,9 +131,9 @@
     <string name="home_metabolism_info_title">點計出嚟</string>
     <string name="home_metabolism_info_body">基礎代謝率（BMR）係你身體休息時所需嘅能量，加埋你嘅日常活動量就係每日總消耗（TDEE）。你嘅每日目標就係喺 TDEE 基礎上，減去一個安全嘅赤字。</string>
     <string name="home_meals_title">今日嘅餐</string>
+    <string name="home_meals_title_other_day">%1$s 嘅餐</string>
     <string name="home_meals_empty">仲未記錄任何一餐，撳 + 加入第一餐。</string>
     <string name="home_group_empty">仲未記錄</string>
-    <string name="home_add_meal">加一餐</string>
 
     <string name="meal_title_add">加一餐</string>
     <string name="meal_title_edit">修改餐點</string>
@@ -132,5 +159,6 @@
     <string name="profile_version">版本 %1$s</string>
 
     <string name="error_required">必填</string>
+    <string name="error_min_age_18">DeFAT 只適用於 18 歲以上。請直接向你嘅教練查詢。</string>
     <string name="error_out_of_range">請輸入 %1$s 至 %2$s 之間嘅數值</string>
 </resources>

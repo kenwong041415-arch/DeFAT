@@ -55,9 +55,10 @@ class ComputeDailyTargetUseCaseTest {
     }
 
     @Test
-    fun `falls back to Mifflin when body fat is unknown`() {
+    fun `falls back to Henry when body fat is unknown`() {
+        // Age 30 on `on` -> Henry's 30-60 male band: 11.4*80 + 5.41*175 - 137.
         val target = useCase(profile(bodyFatPct = null), on)
-        assertEquals(BmrMethod.MIFFLIN_ST_JEOR, target.bmrMethod)
-        assertEquals(1748.75, target.bmrKcal, 1e-6)
+        assertEquals(BmrMethod.HENRY_OXFORD, target.bmrMethod)
+        assertEquals(1721.75, target.bmrKcal, 1e-6)
     }
 }

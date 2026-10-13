@@ -92,6 +92,14 @@ fun BasicsScreen(
             val ageSuffix = uiState.ageYears?.let { " · " + stringResource(R.string.basics_age_years, it) } ?: ""
             Text((uiState.birthDate?.toString() ?: "—") + ageSuffix)
         }
+        if (uiState.isUnderMinAge) {
+            Text(
+                text = stringResource(R.string.error_min_age_18),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
         DecimalField(
@@ -134,7 +142,7 @@ private fun SexOption(label: String, selected: Boolean, onClick: () -> Unit) {
     }
 }
 
-@Preview(name = "Light")
+@Preview(name = "Light", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_NO)
 @Preview(name = "Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun BasicsScreenPreview() {

@@ -5,30 +5,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,15 +29,20 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.defat.app.R
 import com.defat.app.ui.component.CalorieRing
-import com.defat.app.ui.component.DefatDrawerContent
+import com.defat.app.ui.component.DefatTab
+import com.defat.app.ui.component.DefatTabScaffold
 import com.defat.app.ui.component.MacroTileData
 import com.defat.app.ui.component.MacroTileRow
 import com.defat.app.ui.component.MealTypeSections
+import com.defat.app.ui.component.WeekDateStrip
+import com.defat.app.ui.component.bmrMethodLabelRes
 import com.defat.app.ui.theme.DefatTheme
 import com.defat.core.domain.calc.MealGrouping
+import com.defat.core.domain.calc.WeekStrip
 import com.defat.core.domain.calc.roundGrams
 import com.defat.core.domain.calc.roundKcal
 import com.defat.core.domain.model.BmrMethod
@@ -56,16 +52,14 @@ import com.defat.core.domain.model.MacroTargets
 import com.defat.core.domain.model.MealTypeGroup
 import com.defat.core.domain.model.TdeeSource
 import java.time.LocalDate
-import kotlinx.coroutines.launch
 
 @Composable
 fun HomeRoute(
     onAddMeal: () -> Unit,
     onEditMeal: (String) -> Unit,
     onLogWeight: () -> Unit,
-    onOpenHistory: () -> Unit,
-    onOpenProfile: () -> Unit,
-    viewModel: HomeViewModel = androidx.hilt.navigation.compose.hiltViewModel(),
+    onTabSelected: (DefatTab) -> Unit,
+    viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     HomeScreen(
@@ -73,8 +67,10 @@ fun HomeRoute(
         onAddMeal = onAddMeal,
         onEditMeal = onEditMeal,
         onLogWeight = onLogWeight,
-        onOpenHistory = onOpenHistory,
-        onOpenProfile = onOpenProfile,
+        onSelectDay = viewModel::selectDay,
+        onPreviousWeek = viewModel::previousWeek,
+        onNextWeek = viewModel::nextWeek,
+        onTabSelected = onTabSelected,
     )
 }
 
@@ -84,78 +80,49 @@ fun HomeScreen(
     onAddMeal: () -> Unit,
     onEditMeal: (String) -> Unit,
     onLogWeight: () -> Unit,
-    onOpenHistory: () -> Unit,
-    onOpenProfile: () -> Unit,
+    onSelectDay: (LocalDate) -> Unit,
+    onPreviousWeek: () -> Unit,
+    onNextWeek: () -> Unit,
+    onTabSelected: (DefatTab) -> Unit,
 ) {
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-
-    val dailyTargetKcal = (uiState as? HomeUiState.Content)?.dayRollup?.target?.targetKcal?.roundKcal()
-
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            DefatDrawerContent(
-                dailyTargetKcal = dailyTargetKcal,
-                // Navigate INSIDE the coroutine, after close() completes.
-                // Navigating first disposes Home and cancels the close
-                // animation, and drawerState is rememberSaveable — so the
-                // drawer would still be open when the user comes back.
-                onToday = { scope.launch { drawerState.close() } },
-                onLogWeight = {
-                    scope.launch {
-                        drawerState.close()
-                        onLogWeight()
-                    }
-                },
-                onHistory = {
-                    scope.launch {
-                        drawerState.close()
-                        onOpenHistory()
-                    }
-                },
-                onProfile = {
-                    scope.launch {
-                        drawerState.close()
-                        onOpenProfile()
+    DefatTabScaffold(
+        selectedTab = DefatTab.TODAY,
+        onTabSelected = onTabSelected,
+        onAddMeal = onAddMeal,
+        topBar = {
+            // The title and the date — nothing else (plan §6.2).
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(stringResource(R.string.home_title_today))
+                        if (uiState is HomeUiState.Content) {
+                            Text(
+                                text = uiState.selectedDate.toString(),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 },
             )
         },
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(stringResource(R.string.home_title_today)) },
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Filled.Menu, contentDescription = stringResource(R.string.nav_open_menu))
-                        }
-                    },
+    ) { padding ->
+        when (uiState) {
+            is HomeUiState.Loading, HomeUiState.NeedsOnboarding -> {
+                Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            is HomeUiState.Content -> {
+                HomeContent(
+                    modifier = Modifier.padding(padding),
+                    content = uiState,
+                    onEditMeal = onEditMeal,
+                    onLogWeight = onLogWeight,
+                    onSelectDay = onSelectDay,
+                    onPreviousWeek = onPreviousWeek,
+                    onNextWeek = onNextWeek,
                 )
-            },
-            floatingActionButton = {
-                if (uiState is HomeUiState.Content) {
-                    FloatingActionButton(onClick = onAddMeal) {
-                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.home_add_meal))
-                    }
-                }
-            },
-        ) { padding ->
-            when (uiState) {
-                is HomeUiState.Loading, HomeUiState.NeedsOnboarding -> {
-                    Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                }
-                is HomeUiState.Content -> {
-                    HomeContent(
-                        modifier = Modifier.padding(padding),
-                        rollup = uiState.dayRollup,
-                        mealGroups = uiState.mealGroups,
-                        onEditMeal = onEditMeal,
-                    )
-                }
             }
         }
     }
@@ -163,110 +130,155 @@ fun HomeScreen(
 
 @Composable
 private fun HomeContent(
-    rollup: DayRollup,
-    mealGroups: List<MealTypeGroup>,
+    content: HomeUiState.Content,
     onEditMeal: (String) -> Unit,
+    onLogWeight: () -> Unit,
+    onSelectDay: (LocalDate) -> Unit,
+    onPreviousWeek: () -> Unit,
+    onNextWeek: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showMetabolismInfo by remember { mutableStateOf(false) }
+    val rollup: DayRollup = content.dayRollup
+    val mealGroups: List<MealTypeGroup> = content.mealGroups
+    val methodLabel = stringResource(bmrMethodLabelRes(rollup.target.bmrMethod))
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-    ) {
-        CalorieRing(
-            progressFraction = rollup.progressFraction,
-            isOverTarget = rollup.isOverTarget,
-            centerNumber = kotlin.math.abs(rollup.remainingKcal).roundKcal().toString(),
-            centerLabel = stringResource(
-                if (rollup.isOverTarget) R.string.home_kcal_over else R.string.home_kcal_left,
-            ),
-            subLabel = stringResource(
-                R.string.home_eaten_of_target,
-                rollup.intakeKcal.roundKcal(),
-                rollup.target.targetKcal.roundKcal(),
-            ),
+    Column(modifier = modifier.fillMaxSize()) {
+        WeekDateStrip(
+            days = content.weekDays,
+            onSelectDay = onSelectDay,
+            onPreviousWeek = onPreviousWeek,
+            onNextWeek = onNextWeek,
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-        MacroTileRow(
-            protein = MacroTileData(
-                label = stringResource(R.string.macro_protein),
-                usedG = rollup.proteinG.roundGrams(),
-                targetG = rollup.target.macros.proteinG.roundGrams(),
-                emphasised = true,
-                contentDescription = stringResource(
-                    R.string.home_protein_progress,
-                    rollup.proteinG.roundGrams(),
-                    rollup.target.macros.proteinG.roundGrams(),
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+        ) {
+            CalorieRing(
+                progressFraction = rollup.progressFraction,
+                isOverTarget = rollup.isOverTarget,
+                centerNumber = kotlin.math.abs(rollup.remainingKcal).roundKcal().toString(),
+                centerLabel = stringResource(
+                    if (rollup.isOverTarget) R.string.home_kcal_over else R.string.home_kcal_left,
                 ),
-            ),
-            carbs = MacroTileData(
-                label = stringResource(R.string.macro_carbs),
-                usedG = rollup.carbsG.roundGrams(),
-                targetG = rollup.target.macros.carbsG.roundGrams(),
-                emphasised = false,
-                contentDescription = stringResource(
-                    R.string.home_carbs_progress,
-                    rollup.carbsG.roundGrams(),
-                    rollup.target.macros.carbsG.roundGrams(),
+                subLabel = stringResource(
+                    R.string.home_eaten_of_target,
+                    rollup.intakeKcal.roundKcal(),
+                    rollup.target.targetKcal.roundKcal(),
                 ),
-            ),
-            fat = MacroTileData(
-                label = stringResource(R.string.macro_fat),
-                usedG = rollup.fatG.roundGrams(),
-                targetG = rollup.target.macros.fatG.roundGrams(),
-                emphasised = false,
-                contentDescription = stringResource(
-                    R.string.home_fat_progress,
-                    rollup.fatG.roundGrams(),
-                    rollup.target.macros.fatG.roundGrams(),
-                ),
-            ),
-        )
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(stringResource(R.string.home_meals_title), style = MaterialTheme.typography.titleMedium)
-        if (mealGroups.all { it.isEmpty }) {
+            // 記錄體重 was a drawer row; it is a secondary action under the ring now.
+            TextButton(
+                onClick = onLogWeight,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            ) {
+                Text(stringResource(R.string.weight_title))
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            MacroTileRow(
+                protein = MacroTileData(
+                    label = stringResource(R.string.macro_protein),
+                    usedG = rollup.proteinG.roundGrams(),
+                    targetG = rollup.target.macros.proteinG.roundGrams(),
+                    emphasised = true,
+                    contentDescription = stringResource(
+                        R.string.home_protein_progress,
+                        rollup.proteinG.roundGrams(),
+                        rollup.target.macros.proteinG.roundGrams(),
+                    ),
+                ),
+                carbs = MacroTileData(
+                    label = stringResource(R.string.macro_carbs),
+                    usedG = rollup.carbsG.roundGrams(),
+                    targetG = rollup.target.macros.carbsG.roundGrams(),
+                    emphasised = false,
+                    contentDescription = stringResource(
+                        R.string.home_carbs_progress,
+                        rollup.carbsG.roundGrams(),
+                        rollup.target.macros.carbsG.roundGrams(),
+                    ),
+                ),
+                fat = MacroTileData(
+                    label = stringResource(R.string.macro_fat),
+                    usedG = rollup.fatG.roundGrams(),
+                    targetG = rollup.target.macros.fatG.roundGrams(),
+                    emphasised = false,
+                    contentDescription = stringResource(
+                        R.string.home_fat_progress,
+                        rollup.fatG.roundGrams(),
+                        rollup.target.macros.fatG.roundGrams(),
+                    ),
+                ),
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
-                stringResource(R.string.home_meals_empty),
-                style = MaterialTheme.typography.bodyMedium,
+                text = if (content.isToday) {
+                    stringResource(R.string.home_meals_title)
+                } else {
+                    stringResource(R.string.home_meals_title_other_day, content.selectedDate.toString())
+                },
+                style = MaterialTheme.typography.titleMedium,
+            )
+            if (mealGroups.all { it.isEmpty }) {
+                Text(
+                    stringResource(R.string.home_meals_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            MealTypeSections(groups = mealGroups, onEditMeal = onEditMeal)
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(
+                    R.string.home_metabolism_footnote,
+                    rollup.target.bmrKcal.roundKcal(),
+                    rollup.target.tdeeKcal.roundKcal(),
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .clickable { showMetabolismInfo = true }
+                    .semantics { role = Role.Button },
+            )
+            // Names the formula in use (plan §5.5) without making the student tap.
+            Text(
+                text = methodLabel,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
+            // Clearance for the centre add button.
+            Spacer(modifier = Modifier.height(88.dp))
         }
-        MealTypeSections(groups = mealGroups, onEditMeal = onEditMeal)
-
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(
-                R.string.home_metabolism_footnote,
-                rollup.target.bmrKcal.roundKcal(),
-                rollup.target.tdeeKcal.roundKcal(),
-            ),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .clickable { showMetabolismInfo = true }
-                .semantics { role = Role.Button },
-        )
-
-        Spacer(modifier = Modifier.height(80.dp))
     }
 
     if (showMetabolismInfo) {
         ModalBottomSheet(onDismissRequest = { showMetabolismInfo = false }) {
-            Column(modifier = Modifier.padding(24.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
                 Text(stringResource(R.string.home_metabolism_info_title), style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(stringResource(R.string.home_metabolism_info_body))
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(methodLabel, style = MaterialTheme.typography.titleSmall)
+                if (rollup.target.bmrMethod == BmrMethod.HENRY_OXFORD) {
+                    Text(
+                        stringResource(R.string.bmr_method_note_henry),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             }
         }
     }
 }
 
-@Preview(name = "Light")
+@Preview(name = "Light", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_NO)
 @Preview(name = "Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun HomeScreenPreview() {
@@ -288,17 +300,25 @@ private fun HomeScreenPreview() {
         fatG = 27.0,
         mealCount = 2,
     )
+    val today = LocalDate.of(2026, 10, 13)
     DefatTheme {
         HomeScreen(
             uiState = HomeUiState.Content(
                 dayRollup = rollup,
                 mealGroups = MealGrouping.groupByType(emptyList()),
+                selectedDate = today,
+                today = today,
+                weekDays = WeekStrip.cells(today, today, setOf(today.minusDays(1))),
+                previousWeekTarget = today.minusWeeks(1),
+                nextWeekTarget = null,
             ),
             onAddMeal = {},
             onEditMeal = {},
             onLogWeight = {},
-            onOpenHistory = {},
-            onOpenProfile = {},
+            onSelectDay = {},
+            onPreviousWeek = {},
+            onNextWeek = {},
+            onTabSelected = {},
         )
     }
 }

@@ -2,19 +2,21 @@ package com.defat.app.ui
 
 import com.defat.app.fake.FakeMealRepository
 import com.defat.app.fake.FakeProfileRepository
+import com.defat.app.fake.FakeSettingsRepository
+import com.defat.app.fake.TestClock
 import com.defat.app.ui.history.HistoryUiState
 import com.defat.app.ui.history.HistoryViewModel
 import com.defat.core.domain.model.ActivityLevel
 import com.defat.core.domain.model.Goal
 import com.defat.core.domain.model.Meal
 import com.defat.core.domain.model.MealSource
-import com.defat.core.domain.model.MealType
 import com.defat.core.domain.model.Sex
 import com.defat.core.domain.model.UserProfile
 import com.defat.core.domain.usecase.ComputeDailyTargetUseCase
-import com.defat.core.domain.usecase.ObserveTodayDashboardUseCase
+import com.defat.core.domain.usecase.ObserveDaySummariesUseCase
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -47,18 +49,18 @@ class HistoryViewModelTest {
 
     private fun goldenProfile() = UserProfile(
         sex = Sex.MALE,
-        birthDate = LocalDate.now().minusYears(30),
+        birthDate = TestClock.today.minusYears(30),
         heightCm = 175.0,
         weightKg = 80.0,
         bodyFatPct = 25.0,
         activityLevel = ActivityLevel.MODERATE,
         goal = Goal(targetWeightKg = 75.0),
-        disclaimerAcceptedAt = Instant.now(),
+        disclaimerAcceptedAt = Instant.parse("2026-01-01T00:00:00Z"),
     )
 
-    private fun meal(date: LocalDate, kcal: Double, mealType: MealType) = Meal(
-        id = "$date-$kcal-$mealType",
-        loggedAt = date.atTime(12, 0).atZone(java.time.ZoneId.systemDefault()).toInstant(),
+    private fun meal(date: LocalDate, hour: Int, minute: Int, kcal: Double) = Meal(
+        id = "$date-$hour:$minute-$kcal",
+        loggedAt = LocalDateTime.of(date, java.time.LocalTime.of(hour, minute)).atZone(TestClock.zone).toInstant(),
         date = date,
         name = "meal",
         kcal = kcal,
@@ -66,26 +68,31 @@ class HistoryViewModelTest {
         carbsG = 10.0,
         fatG = 10.0,
         source = MealSource.MANUAL,
-        mealType = mealType,
     )
 
-    private fun newViewModel(mealRepository: FakeMealRepository): HistoryViewModel {
-        val profileRepository = FakeProfileRepository(goldenProfile())
-        val observeDashboard = ObserveTodayDashboardUseCase(
+    private fun newViewModel(
+        mealRepository: FakeMealRepository,
+        profileRepository: FakeProfileRepository = FakeProfileRepository(goldenProfile()),
+        selectedDay: SelectedDayHolder = SelectedDayHolder(),
+    ): HistoryViewModel {
+        val summaries = ObserveDaySummariesUseCase(
             profileRepository,
             mealRepository,
+            FakeSettingsRepository(),
             ComputeDailyTargetUseCase(),
+            TestClock.clock,
         )
-        return HistoryViewModel(observeDashboard, mealRepository)
+        return HistoryViewModel(summaries, profileRepository, selectedDay)
     }
 
     @Test
-    fun `shows the selected day's meals grouped by type`() = runTest(testDispatcher) {
-        val yesterday = LocalDate.now().minusDays(1)
+    fun `lists only days with meals, newest first`() = runTest(testDispatcher) {
+        val today = TestClock.today
         val mealRepository = FakeMealRepository(
             listOf(
-                meal(yesterday, 300.0, MealType.BREAKFAST),
-                meal(yesterday, 450.0, MealType.LUNCH),
+                meal(today.minusDays(3), 12, 0, kcal = 500.0),
+                meal(today, 12, 0, kcal = 700.0),
+                meal(today.minusDays(3), 19, 0, kcal = 400.0),
             ),
         )
         val viewModel = newViewModel(mealRepository)
@@ -93,56 +100,63 @@ class HistoryViewModelTest {
         backgroundScope.launch { viewModel.uiState.collect {} }
         runCurrent()
 
-        viewModel.previousDay()
-        runCurrent()
-
         val state = viewModel.uiState.value
         assertTrue(state is HistoryUiState.Content)
         state as HistoryUiState.Content
-        assertEquals(yesterday, state.date)
-
-        val breakfast = state.mealGroups.single { it.type == MealType.BREAKFAST }
-        assertEquals(300.0, breakfast.kcal)
-        val lunch = state.mealGroups.single { it.type == MealType.LUNCH }
-        assertEquals(450.0, lunch.kcal)
+        assertEquals(listOf(today, today.minusDays(3)), state.days.map { it.date })
+        assertEquals(900.0, state.days[1].intakeKcal, 1e-9)
+        assertEquals(2, state.days[1].mealCount)
     }
 
     @Test
-    fun `cannot go past today`() = runTest(testDispatcher) {
-        val mealRepository = FakeMealRepository()
+    fun `a day is on target until it goes over`() = runTest(testDispatcher) {
+        val today = TestClock.today
+        val mealRepository = FakeMealRepository(
+            listOf(
+                meal(today.minusDays(1), 12, 0, kcal = 500.0),
+                meal(today, 12, 0, kcal = 9000.0),
+            ),
+        )
         val viewModel = newViewModel(mealRepository)
 
         backgroundScope.launch { viewModel.uiState.collect {} }
         runCurrent()
 
-        val initial = viewModel.uiState.value
-        assertTrue(initial is HistoryUiState.Content)
-        assertFalse((initial as HistoryUiState.Content).canGoForward)
-
-        viewModel.nextDay()
-        runCurrent()
-
-        val after = viewModel.uiState.value
-        assertTrue(after is HistoryUiState.Content)
-        assertEquals(LocalDate.now(), (after as HistoryUiState.Content).date)
+        val days = (viewModel.uiState.value as HistoryUiState.Content).days
+        assertTrue(days.single { it.date == today }.isOverTarget)
+        assertFalse(days.single { it.date == today.minusDays(1) }.isOverTarget)
     }
 
     @Test
-    fun `an empty past day still shows five groups`() = runTest(testDispatcher) {
-        val mealRepository = FakeMealRepository()
-        val viewModel = newViewModel(mealRepository)
+    fun `an empty log is an empty list, not an error`() = runTest(testDispatcher) {
+        val viewModel = newViewModel(FakeMealRepository())
 
         backgroundScope.launch { viewModel.uiState.collect {} }
         runCurrent()
 
-        viewModel.previousDay()
-        runCurrent()
-
         val state = viewModel.uiState.value
         assertTrue(state is HistoryUiState.Content)
-        state as HistoryUiState.Content
-        assertEquals(5, state.mealGroups.size)
-        assertTrue(state.mealGroups.all { it.isEmpty })
-        assertEquals(0.0, state.dayRollup.intakeKcal)
+        assertTrue((state as HistoryUiState.Content).days.isEmpty())
+    }
+
+    @Test
+    fun `without a profile it needs onboarding`() = runTest(testDispatcher) {
+        val viewModel = newViewModel(FakeMealRepository(), profileRepository = FakeProfileRepository(null))
+
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+
+        assertEquals(HistoryUiState.NeedsOnboarding, viewModel.uiState.value)
+    }
+
+    @Test
+    fun `opening a day selects it for Home`() = runTest(testDispatcher) {
+        val selectedDay = SelectedDayHolder()
+        val viewModel = newViewModel(FakeMealRepository(), selectedDay = selectedDay)
+        val target = TestClock.today.minusDays(4)
+
+        viewModel.openDay(target)
+
+        assertEquals(target, selectedDay.selected.value)
     }
 }

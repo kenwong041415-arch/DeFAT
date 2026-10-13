@@ -1,10 +1,11 @@
 package com.defat.app.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
+import android.content.res.Configuration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalConfiguration
 
 private val LightColors = lightColorScheme(
     primary = LightPrimary,
@@ -80,9 +81,25 @@ private val DarkColors = darkColorScheme(
     inversePrimary = DarkInversePrimary,
 )
 
+/**
+ * Dark-first (Phase 1.7 plan §9). The system's day/night setting is honoured
+ * when it says "day"; when the system gives no signal ([Configuration.UI_MODE_NIGHT_UNDEFINED])
+ * the app is dark. Note this is *not* `isSystemInDarkTheme()`, which would
+ * treat "no signal" as light.
+ *
+ * The palette is the fixed pine/jade one from Phase 1.6 §7 — unchanged, with
+ * its green-biased surface-container ramp, and no Material You dynamic colour
+ * (E15). Light stays shipped and correct for students who prefer it.
+ */
+@Composable
+private fun isDarkByDefault(): Boolean {
+    val nightMode = LocalConfiguration.current.uiMode and Configuration.UI_MODE_NIGHT_MASK
+    return nightMode != Configuration.UI_MODE_NIGHT_NO
+}
+
 @Composable
 fun DefatTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = isDarkByDefault(),
     content: @Composable () -> Unit,
 ) {
     MaterialTheme(

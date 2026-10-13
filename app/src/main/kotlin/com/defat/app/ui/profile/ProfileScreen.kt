@@ -1,82 +1,104 @@
 package com.defat.app.ui.profile
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.defat.app.R
 import com.defat.app.ui.component.DecimalField
+import com.defat.app.ui.component.DefatTab
+import com.defat.app.ui.component.DefatTabScaffold
 import com.defat.app.ui.component.SectionCard
+import com.defat.app.ui.component.bmrMethodLabelRes
+import com.defat.app.ui.settings.SettingsViewModel
 import com.defat.app.ui.theme.DefatTheme
-import com.defat.core.domain.calc.roundGrams
 import com.defat.core.domain.calc.roundKcal
 import com.defat.core.domain.model.BmrMethod
 import com.defat.core.domain.model.DailyTarget
 import com.defat.core.domain.model.MacroTargets
 import com.defat.core.domain.model.TdeeSource
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun ProfileRoute(
-    onBack: () -> Unit,
+    onLogWeight: () -> Unit,
+    onAddMeal: () -> Unit,
+    onTabSelected: (DefatTab) -> Unit,
     viewModel: ProfileViewModel = hiltViewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val dayStart by settingsViewModel.dayStart.collectAsStateWithLifecycle()
     ProfileScreen(
         uiState = uiState,
+        dayStart = dayStart,
+        dayStartOptions = settingsViewModel.dayStartOptions,
+        onDayStartSelected = settingsViewModel::setDayStart,
         onWeightChange = { text -> viewModel.updateForm { it.copy(weightKgText = text) } },
         onHeightChange = { text -> viewModel.updateForm { it.copy(heightCmText = text) } },
         onBodyFatChange = { text -> viewModel.updateForm { it.copy(bodyFatPctText = text) } },
         onGoalWeightChange = { text -> viewModel.updateForm { it.copy(goalTargetWeightText = text) } },
         onSave = viewModel::save,
-        onBack = onBack,
+        onLogWeight = onLogWeight,
+        onAddMeal = onAddMeal,
+        onTabSelected = onTabSelected,
     )
 }
 
 @Composable
 fun ProfileScreen(
     uiState: ProfileUiState,
+    dayStart: LocalTime,
+    dayStartOptions: List<LocalTime>,
+    onDayStartSelected: (LocalTime) -> Unit,
     onWeightChange: (String) -> Unit,
     onHeightChange: (String) -> Unit,
     onBodyFatChange: (String) -> Unit,
     onGoalWeightChange: (String) -> Unit,
     onSave: () -> Unit,
-    onBack: () -> Unit,
+    onLogWeight: () -> Unit,
+    onAddMeal: () -> Unit,
+    onTabSelected: (DefatTab) -> Unit,
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.profile_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
-                    }
-                },
-            )
-        },
+    var showDayStartDialog by remember { mutableStateOf(false) }
+    val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
+
+    DefatTabScaffold(
+        selectedTab = DefatTab.ME,
+        onTabSelected = onTabSelected,
+        onAddMeal = onAddMeal,
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.profile_title)) }) },
     ) { padding ->
         when (uiState) {
             ProfileUiState.Loading -> {
@@ -89,12 +111,13 @@ fun ProfileScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
-                        .padding(24.dp)
+                        .padding(horizontal = 24.dp)
                         .verticalScroll(rememberScrollState()),
                 ) {
-                    if (uiState.dailyTarget != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    val target = uiState.dailyTarget
+                    if (target != null) {
                         SectionCard(title = stringResource(R.string.summary_target), modifier = Modifier.padding(bottom = 16.dp)) {
-                            val target = uiState.dailyTarget
                             Text(
                                 "${target.targetKcal.roundKcal()} ${stringResource(R.string.unit_kcal)}",
                                 style = MaterialTheme.typography.displaySmall,
@@ -103,9 +126,56 @@ fun ProfileScreen(
                                 stringResource(R.string.home_metabolism_line, target.bmrKcal.roundKcal(), target.tdeeKcal.roundKcal()),
                                 style = MaterialTheme.typography.bodySmall,
                             )
+                            // Names the BMR formula in use (plan §5.5).
+                            Text(
+                                stringResource(bmrMethodLabelRes(target.bmrMethod)),
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                            if (target.bmrMethod == BmrMethod.HENRY_OXFORD) {
+                                Text(
+                                    stringResource(R.string.bmr_method_note_henry),
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
                         }
                     }
 
+                    // 記錄體重 was a drawer row (plan §6.2); it lives here now.
+                    OutlinedButton(onClick = onLogWeight, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.weight_title))
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(role = Role.Button) { showDayStartDialog = true }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            stringResource(R.string.day_start_title),
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(
+                            dayStart.format(timeFormatter),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    Text(
+                        stringResource(R.string.day_start_helper),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        stringResource(R.string.day_start_helper_note),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
                     DecimalField(
                         value = uiState.form.heightCmText,
                         onValueChange = onHeightChange,
@@ -148,13 +218,54 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(stringResource(R.string.profile_version, uiState.appVersion), style = MaterialTheme.typography.labelSmall)
+
+                    // Clearance for the centre add button.
+                    Spacer(modifier = Modifier.height(88.dp))
                 }
             }
         }
     }
+
+    if (showDayStartDialog) {
+        AlertDialog(
+            onDismissRequest = { showDayStartDialog = false },
+            title = { Text(stringResource(R.string.day_start_title)) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    dayStartOptions.forEach { option ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = option == dayStart,
+                                    role = Role.RadioButton,
+                                    onClick = {
+                                        onDayStartSelected(option)
+                                        showDayStartDialog = false
+                                    },
+                                )
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(selected = option == dayStart, onClick = null)
+                            Text(
+                                option.format(timeFormatter),
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(start = 12.dp),
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showDayStartDialog = false }) { Text(stringResource(R.string.common_cancel)) }
+            },
+        )
+    }
 }
 
-@Preview(name = "Light")
+@Preview(name = "Light", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_NO)
 @Preview(name = "Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun ProfileScreenPreview() {
@@ -187,14 +298,19 @@ private fun ProfileScreenPreview() {
                     goalTargetWeightText = "75",
                 ),
                 dailyTarget = target,
-                appVersion = "0.1.0-phase1",
+                appVersion = "0.3.0-phase1.7a",
             ),
+            dayStart = LocalTime.of(4, 0),
+            dayStartOptions = listOf(LocalTime.of(0, 0), LocalTime.of(4, 0), LocalTime.of(8, 0)),
+            onDayStartSelected = {},
             onWeightChange = {},
             onHeightChange = {},
             onBodyFatChange = {},
             onGoalWeightChange = {},
             onSave = {},
-            onBack = {},
+            onLogWeight = {},
+            onAddMeal = {},
+            onTabSelected = {},
         )
     }
 }

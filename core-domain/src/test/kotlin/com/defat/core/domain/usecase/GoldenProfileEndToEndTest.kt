@@ -78,18 +78,19 @@ class GoldenProfileEndToEndTest {
     }
 
     @Test
-    fun `golden profile with unknown body fat — full Mifflin chain`() {
+    fun `golden profile with unknown body fat — full Henry chain`() {
         val target = computeDailyTarget(goldenProfile(bodyFatPct = null), on)
 
-        // BMR (Mifflin-St Jeor) — see D4: docs/04 corrected to 1748.75
-        assertEquals(1748.75, target.bmrKcal, 1e-6)
-        assertEquals(BmrMethod.MIFFLIN_ST_JEOR, target.bmrMethod)
+        // BMR (Henry/Oxford, male 30-60 band; age is exactly 30 on `on`):
+        //   11.4*80 + 5.41*175 - 137 = 912 + 946.75 - 137 = 1721.75
+        assertEquals(1721.75, target.bmrKcal, 1e-6)
+        assertEquals(BmrMethod.HENRY_OXFORD, target.bmrMethod)
 
-        // TDEE (x1.55)
-        assertEquals(2710.5625, target.tdeeKcal, 1e-6)
+        // TDEE (x1.55): 1721.75 * 1.55
+        assertEquals(2668.7125, target.tdeeKcal, 1e-6)
 
-        // Target (-20%)
-        assertEquals(2168.45, target.targetKcal, 1e-6)
+        // Target (-20%): 2668.7125 * 0.8
+        assertEquals(2134.97, target.targetKcal, 1e-6)
 
         // Protein (1.8 x 80 kg bodyweight)
         assertEquals(144.0, target.macros.proteinG, 1e-6)
@@ -97,7 +98,7 @@ class GoldenProfileEndToEndTest {
         // Fat (0.6 x 80)
         assertEquals(48.0, target.macros.fatG, 1e-6)
 
-        // Carbs
-        assertEquals(290.1125, target.macros.carbsG, 1e-6)
+        // Carbs: (2134.97 - 4*144 - 9*48) / 4 = 1126.97 / 4
+        assertEquals(281.7425, target.macros.carbsG, 1e-6)
     }
 }

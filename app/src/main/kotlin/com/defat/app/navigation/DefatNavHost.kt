@@ -12,6 +12,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.defat.app.StartDestination
+import com.defat.app.ui.component.DefatTab
 import com.defat.app.ui.history.HistoryRoute
 import com.defat.app.ui.home.HomeRoute
 import com.defat.app.ui.meal.MealEditorRoute
@@ -23,6 +24,7 @@ import com.defat.app.ui.onboarding.OnboardingViewModel
 import com.defat.app.ui.onboarding.SummaryRoute
 import com.defat.app.ui.onboarding.WelcomeRoute
 import com.defat.app.ui.profile.ProfileRoute
+import com.defat.app.ui.progress.ProgressRoute
 import com.defat.app.ui.weight.LogWeightRoute
 
 @Composable
@@ -30,6 +32,21 @@ fun DefatNavHost(
     startDestination: StartDestination,
     navController: NavHostController = rememberNavController(),
 ) {
+    // Bottom-bar navigation (plan §6.1). Popping to HOME (by route, because after
+    // onboarding the graph's start destination is no longer on the stack) and
+    // saving/restoring state keeps each tab as the student left it. Tapping the
+    // tab already on screen is a no-op through launchSingleTop.
+    val navigateToTab: (DefatTab) -> Unit = { tab ->
+        navController.navigate(tab.route) {
+            popUpTo(Routes.HOME) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+    // The centre add button opens the editor for the selected day; the editor
+    // reads the selected day itself (SelectedDayHolder), so no argument is needed.
+    val addMeal: () -> Unit = { navController.navigate(Routes.MEAL_ADD) }
+
     NavHost(
         navController = navController,
         startDestination = if (startDestination == StartDestination.HOME) Routes.HOME else Routes.ONBOARDING_GRAPH,
@@ -87,17 +104,27 @@ fun DefatNavHost(
 
         composable(Routes.HOME) {
             HomeRoute(
-                onAddMeal = { navController.navigate(Routes.MEAL_ADD) },
+                onAddMeal = addMeal,
                 onEditMeal = { mealId -> navController.navigate(Routes.mealEdit(mealId)) },
                 onLogWeight = { navController.navigate(Routes.WEIGHT_LOG) },
-                onOpenHistory = { navController.navigate(Routes.HISTORY) },
-                onOpenProfile = { navController.navigate(Routes.PROFILE) },
+                onTabSelected = navigateToTab,
             )
         }
         composable(Routes.HISTORY) {
             HistoryRoute(
-                onEditMeal = { mealId -> navController.navigate(Routes.mealEdit(mealId)) },
-                onBack = { navController.popBackStack() },
+                onOpenToday = { navigateToTab(DefatTab.TODAY) },
+                onAddMeal = addMeal,
+                onTabSelected = navigateToTab,
+            )
+        }
+        composable(Routes.PROGRESS) {
+            ProgressRoute(onTabSelected = navigateToTab, onAddMeal = addMeal)
+        }
+        composable(Routes.PROFILE) {
+            ProfileRoute(
+                onLogWeight = { navController.navigate(Routes.WEIGHT_LOG) },
+                onAddMeal = addMeal,
+                onTabSelected = navigateToTab,
             )
         }
         composable(Routes.MEAL_ADD) {
@@ -114,9 +141,6 @@ fun DefatNavHost(
         }
         composable(Routes.WEIGHT_LOG) {
             LogWeightRoute(onDone = { navController.popBackStack() })
-        }
-        composable(Routes.PROFILE) {
-            ProfileRoute(onBack = { navController.popBackStack() })
         }
     }
 }

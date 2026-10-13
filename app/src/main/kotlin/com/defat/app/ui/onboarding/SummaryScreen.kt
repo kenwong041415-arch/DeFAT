@@ -147,7 +147,7 @@ private fun MacroValue(label: String, grams: Int) {
     }
 }
 
-@Preview(name = "Light")
+@Preview(name = "Light", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_NO)
 @Preview(name = "Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun SummaryScreenPreview() {

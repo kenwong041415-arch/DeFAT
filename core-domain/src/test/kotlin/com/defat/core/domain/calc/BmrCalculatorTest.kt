@@ -53,10 +53,71 @@ class BmrCalculatorTest {
     }
 
     @Test
-    fun `bmr() falls back to Mifflin when body fat is null`() {
+    fun `bmr() falls back to Henry when body fat is null`() {
         val profile = goldenProfile(bodyFatPct = null)
         val result = BmrCalculator.bmr(profile, LocalDate.of(2026, 1, 1))
-        assertEquals(BmrMethod.MIFFLIN_ST_JEOR, result.method)
+        assertEquals(BmrMethod.HENRY_OXFORD, result.method)
+    }
+
+    // --- Henry (2005) "Oxford" — docs/04 reference vectors -----------------
+
+    @Test
+    fun `henry male 18 to 30 reference vector`() {
+        // 14.4*80 + 3.13*175 + 113 = 1152 + 547.75 + 113
+        val bmr = BmrCalculator.henryOxford(weightKg = 80.0, heightCm = 175.0, ageYears = 25, sex = Sex.MALE)
+        assertEquals(1812.75, bmr, 0.01)
+    }
+
+    @Test
+    fun `henry male 30 to 60 reference vector`() {
+        // 11.4*80 + 5.41*175 - 137 = 912 + 946.75 - 137
+        val bmr = BmrCalculator.henryOxford(weightKg = 80.0, heightCm = 175.0, ageYears = 35, sex = Sex.MALE)
+        assertEquals(1721.75, bmr, 0.01)
+    }
+
+    @Test
+    fun `henry male 60 plus reference vector`() {
+        // 11.4*80 + 5.41*175 - 256 = 912 + 946.75 - 256
+        val bmr = BmrCalculator.henryOxford(weightKg = 80.0, heightCm = 175.0, ageYears = 65, sex = Sex.MALE)
+        assertEquals(1602.75, bmr, 0.01)
+    }
+
+    @Test
+    fun `henry female 18 to 30 reference vector`() {
+        // 10.4*60 + 6.15*162 - 282 = 624 + 996.3 - 282
+        val bmr = BmrCalculator.henryOxford(weightKg = 60.0, heightCm = 162.0, ageYears = 28, sex = Sex.FEMALE)
+        assertEquals(1338.3, bmr, 0.01)
+    }
+
+    @Test
+    fun `henry female 30 to 60 reference vector`() {
+        // 8.18*58 + 5.02*160 - 11.6 = 474.44 + 803.2 - 11.6
+        val bmr = BmrCalculator.henryOxford(weightKg = 58.0, heightCm = 160.0, ageYears = 38, sex = Sex.FEMALE)
+        assertEquals(1266.04, bmr, 0.01)
+    }
+
+    @Test
+    fun `henry female 60 plus reference vector`() {
+        // 8.52*70 + 4.21*158 + 10.7 = 596.4 + 665.18 + 10.7
+        val bmr = BmrCalculator.henryOxford(weightKg = 70.0, heightCm = 158.0, ageYears = 65, sex = Sex.FEMALE)
+        assertEquals(1272.28, bmr, 0.01)
+    }
+
+    @Test
+    fun `henry steps down at the 30th birthday - the step is real and intentional`() {
+        // docs/04 note 3: bands are discontinuous and we implement the
+        // published equation exactly. Age 30 belongs to the 30-60 band.
+        val at29 = BmrCalculator.henryOxford(weightKg = 80.0, heightCm = 175.0, ageYears = 29, sex = Sex.MALE)
+        val at30 = BmrCalculator.henryOxford(weightKg = 80.0, heightCm = 175.0, ageYears = 30, sex = Sex.MALE)
+        assertEquals(1812.75, at29, 0.01)
+        assertEquals(1721.75, at30, 0.01)
+    }
+
+    @Test
+    fun `henry rejects minors`() {
+        assertFailsWith<IllegalArgumentException> {
+            BmrCalculator.henryOxford(weightKg = 80.0, heightCm = 175.0, ageYears = 17, sex = Sex.MALE)
+        }
     }
 
     @Test

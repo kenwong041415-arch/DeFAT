@@ -14,6 +14,34 @@ object NutritionConstants {
     const val KATCH_BASE = 370.0
     const val KATCH_LBM_COEFFICIENT = 21.6
 
+    // Henry (2005) "Oxford" equations — docs/04. kcal/day, W in kg, H in cm.
+    // Secondary-sourced coefficients; see docs/04 note 2 before changing them.
+    const val HENRY_M_18_30_W = 14.4
+    const val HENRY_M_18_30_H = 3.13
+    const val HENRY_M_18_30_C = 113.0
+    const val HENRY_M_30_60_W = 11.4
+    const val HENRY_M_30_60_H = 5.41
+    const val HENRY_M_30_60_C = -137.0
+    const val HENRY_M_60_PLUS_W = 11.4
+    const val HENRY_M_60_PLUS_H = 5.41
+    const val HENRY_M_60_PLUS_C = -256.0
+    const val HENRY_F_18_30_W = 10.4
+    const val HENRY_F_18_30_H = 6.15
+    const val HENRY_F_18_30_C = -282.0
+    const val HENRY_F_30_60_W = 8.18
+    const val HENRY_F_30_60_H = 5.02
+    const val HENRY_F_30_60_C = -11.6
+    const val HENRY_F_60_PLUS_W = 8.52
+    const val HENRY_F_60_PLUS_H = 4.21
+    const val HENRY_F_60_PLUS_C = 10.7
+
+    /** Lower bound of the adult band Henry's adult equations cover. */
+    const val HENRY_MIN_ADULT_AGE = 18
+
+    // Age at which Henry's bands step (half-open on the lower bound; docs/04).
+    const val HENRY_BAND_2_FROM_AGE = 30
+    const val HENRY_BAND_3_FROM_AGE = 60
+
     // docs/04 — TDEE: wearable mode "TDEE = BMR x 1.1 (NEAT/TEF baseline) + activeEnergy"
     const val NEAT_TEF_BASELINE = 1.1 // docs/04 wearable mode; tune with owner
 

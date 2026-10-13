@@ -272,8 +272,14 @@ in use. String keys and exact text:
 | `bmr_method_henry` | `Henry / Oxford (2005)` | `Henry／Oxford（2005）` |
 | `bmr_method_note_henry` | `Add your body fat %% for a more personal number.` | `加入體脂率，個數字會更貼你。` |
 
-Note the escaped `%%` — these go through `getString` with no arguments, but
-Android lint flags a bare `%` in a translatable string.
+**Correction (review pass): use a bare `%`, not `%%`.** The original text here
+told the implementer to escape it. That was wrong. `stringResource(id)` calls
+`getString(id)` with no arguments, which does no format substitution, so `%%`
+would render on screen as two literal percent signs. The repo already ships
+three no-argument strings containing a bare `%` — `body_fat_pct`,
+`body_fat_hint`, `summary_method_katch` — and they pass lint. §14's identical
+advice is wrong for the same reason; escape `%` only in strings that actually
+take format arguments.
 
 ---
 
@@ -405,10 +411,30 @@ Every place that currently derives a date from an instant:
 - `HistoryViewModel`, `HomeViewModel`.
 - Streak counting (§12).
 
-**`MealTypeInference` does NOT change.** It maps a wall-clock time to a meal
-type and is independent of which logical day that time belongs to. A 01:30
-snack is 小食 on yesterday's list. Leave `MealTypeInference` and its tests
-exactly as they are.
+**`MealTypeInference`'s frozen path does not change — but it needs a new
+day-start-aware overload.**
+
+The original wording here was: *"A 01:30 snack is 小食 on yesterday's list.
+Leave `MealTypeInference` and its tests exactly as they are."* **That was
+wrong**, and the Sonnet implementation pass caught it. The frozen rule maps
+everything before 10:30 to `BREAKFAST`, including 01:30 — so with a 04:00 day
+start a late-night bowl of noodles would be inferred as 早餐 and then merged
+into the previous day's 早餐 section next to that day's real 08:00 breakfast.
+The student would see two breakfasts and no late-night snack.
+
+The fix, applied in the Opus review pass:
+
+- `forMinuteOfDay(minute)` and `forTime(time)` are **frozen**. The shipped
+  Room v1 → v2 migration back-fills rows with exactly these boundaries and
+  `MealTypeMigrationSqlTest` proves SQL and Kotlin agree for all 1440
+  minutes. Touching them would make the migration disagree with the code.
+- A new `forTime(time, dayStart)` returns `SNACK` when `time < dayStart` and
+  delegates to the frozen rule otherwise. A midnight `dayStart` reproduces
+  the frozen rule exactly, so nothing changes for a user who never moves the
+  setting — asserted over all 1440 minutes.
+- `MealEditorViewModel` uses the overload at all three inference points
+  (initial state, the post-load re-infer, and `setTime`), and still respects
+  `mealTypeManuallySet`.
 
 ### 7.4 Setting UI and storage
 
@@ -1039,6 +1065,29 @@ was deleted rather than re-guessed); CI uploads real schemas as an artifact.
 Before PR B merges, pull that artifact and commit `2.json` and `3.json` for
 real, then turn the drift guard on. This is the last phase where skipping it
 is tolerable — three tables land in one migration.
+
+### R5a (MEDIUM, accepted) — a profile already stored under 18 now gets an adult target instead of crashing
+
+A6 rejects a minor at the wizard, so no *new* profile can be under 18. But
+`henryOxford` throws under 18, and Home and History open arbitrary past days,
+so a 19-year-old browsing back three years would have asked for a
+16-year-old's BMR and crashed the app. `TargetReferenceDate` (added in the
+implementation pass, tested) fixes that by evaluating any day before the
+student's 18th birthday as of that birthday.
+
+The side effect: a profile created *before* PR A that is still under 18 today
+now shows an adult target where it previously crashed. That contradicts A6's
+own rationale — computing an adult cut target for a 15-year-old is exactly
+what A6 exists to prevent.
+
+**Accepted, not fixed, for PR A.** Such a profile can only exist on an
+install created before this phase, and the only such install is the owner's,
+who is an adult. The alternative — routing a stored minor back through
+onboarding — adds a lockout path that could strand a real user's logged data
+for a case that cannot currently occur. If DeFAT ever reaches students
+directly (Phase 5 closed testing), this must be closed first: a profile whose
+age *today* is under 18 should be sent back to onboarding with
+`error_min_age_18`, not given a target.
 
 ### R6 (LOW) — bottom nav reverses a P1.6 decision
 

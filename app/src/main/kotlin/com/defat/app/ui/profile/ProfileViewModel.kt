@@ -75,7 +75,7 @@ class ProfileViewModel @Inject constructor(
                 existingProfile = profile,
                 form = current,
                 dailyTarget = target,
-                appVersion = "0.1.0-phase1",
+                appVersion = "0.3.0-phase1.7a",
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProfileUiState.Loading)
@@ -109,7 +109,7 @@ class ProfileViewModel @Inject constructor(
         val weightKg = weightKgText.toDoubleOrNull() ?: return null
         val goalTargetWeightKg = goalTargetWeightText.toDoubleOrNull() ?: return null
         if (!isBodyFatValid) return null
-        // Blank = unknown (Mifflin path). Using the text rather than the
+        // Blank = unknown (Henry path). Using the text rather than the
         // stored "unknown" flag lets someone who started without a body-fat
         // reading type one in later.
         val bodyFat = bodyFatPctText.takeIf { it.isNotBlank() }?.toDoubleOrNull()

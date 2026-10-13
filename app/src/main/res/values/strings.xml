@@ -68,16 +68,43 @@
     <string name="summary_floor_applied">We raised your target to the safe minimum of %1$d kcal.</string>
 
     <string name="home_title_today">Today</string>
-    <string name="nav_open_menu">Open menu</string>
-    <string name="drawer_target_line">Daily target %1$d kcal</string>
-    <string name="drawer_charts">Progress charts</string>
-    <string name="drawer_coming_soon">Coming soon</string>
+    <string name="nav_today">Today</string>
+    <string name="nav_history">History</string>
+    <string name="nav_progress">Progress</string>
+    <string name="nav_me">Me</string>
+    <string name="action_add_meal">Add meal</string>
 
     <string name="history_title">History</string>
     <string name="history_pick_date">Pick a date</string>
-    <string name="history_prev_day">Previous day</string>
-    <string name="history_next_day">Next day</string>
-    <string name="history_totals_title">That day\'s total</string>
+    <string name="history_empty">Nothing logged yet. Tap + to add your first meal.</string>
+    <string name="history_on_target">On target</string>
+    <string name="history_over_target">Over target</string>
+
+    <string-array name="week_day_initials">
+        <item>M</item>
+        <item>T</item>
+        <item>W</item>
+        <item>T</item>
+        <item>F</item>
+        <item>S</item>
+        <item>S</item>
+    </string-array>
+    <string name="week_previous">Previous week</string>
+    <string name="week_next">Next week</string>
+    <string name="week_day_has_entries">Has meals logged</string>
+
+    <string name="progress_title">Progress</string>
+    <string name="progress_soon_heading">Charts are coming</string>
+    <string name="progress_soon_body">Once you have a couple of weeks of logs, this tab will show your weight trend and weekly rate.</string>
+
+    <string name="bmr_method_katch">Katch-McArdle (uses your body fat %)</string>
+    <string name="bmr_method_henry">Henry / Oxford (2005)</string>
+    <string name="bmr_method_mifflin">Mifflin-St Jeor</string>
+    <string name="bmr_method_note_henry">Add your body fat % for a more personal number.</string>
+
+    <string name="day_start_title">When does your day start?</string>
+    <string name="day_start_helper">Meals logged before this time count towards the previous day.</string>
+    <string name="day_start_helper_note">Past records are not moved; only how days are grouped changes.</string>
 
     <string name="meal_type_breakfast">Breakfast</string>
     <string name="meal_type_lunch">Lunch</string>
@@ -104,9 +131,9 @@
     <string name="home_metabolism_info_title">How we calculate this</string>
     <string name="home_metabolism_info_body">Your BMR is the energy your body needs at rest. TDEE adds your activity on top. Your daily target is TDEE minus a safe deficit.</string>
     <string name="home_meals_title">Today\'s meals</string>
+    <string name="home_meals_title_other_day">Meals on %1$s</string>
     <string name="home_meals_empty">No meals logged yet — tap + to add your first one.</string>
     <string name="home_group_empty">Nothing logged yet</string>
-    <string name="home_add_meal">Add meal</string>
 
     <string name="meal_title_add">Add meal</string>
     <string name="meal_title_edit">Edit meal</string>
@@ -132,5 +159,6 @@
     <string name="profile_version">Version %1$s</string>
 
     <string name="error_required">Required</string>
+    <string name="error_min_age_18">DeFAT is for adults (18+). Please ask your trainer for guidance.</string>
     <string name="error_out_of_range">Enter a value between %1$s and %2$s</string>
 </resources>
