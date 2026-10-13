@@ -35,13 +35,24 @@ object TdeeCalculator {
 
     /**
      * Chooses the wearable branch when [activeKcal] is non-null (Phase 1
-     * always passes null; Phase 2 wires Health Connect).
+     * always passes null; Phase 2 wires Health Connect). Without wearable data,
+     * [exerciseKcal] is the day's manually logged exercise and goes through
+     * [DayTdeeCalculator]; at 0 that is exactly the multiplier result.
+     *
+     * A wearable reading wins over manual entries: docs/04 says an overlapping
+     * manual entry is not counted once a wearable session exists, and the
+     * wearable branch already includes all active energy.
      */
-    fun tdee(bmrKcal: Double, level: ActivityLevel, activeKcal: Double?): TdeeResult {
+    fun tdee(
+        bmrKcal: Double,
+        level: ActivityLevel,
+        activeKcal: Double?,
+        exerciseKcal: Double = 0.0,
+    ): TdeeResult {
         return if (activeKcal != null) {
             TdeeResult(fromWearable(bmrKcal, activeKcal), TdeeSource.WEARABLE)
         } else {
-            TdeeResult(fromActivityLevel(bmrKcal, level), TdeeSource.ACTIVITY_MULTIPLIER)
+            DayTdeeCalculator.tdee(bmrKcal, level, exerciseKcal)
         }
     }
 }

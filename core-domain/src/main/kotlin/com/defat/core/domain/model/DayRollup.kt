@@ -10,7 +10,13 @@ data class DayRollup(
     val carbsG: Double,
     val fatG: Double,
     val mealCount: Int,
+    /** The day's manually logged exercise, already counted in [target]'s TDEE (plan §10.2). */
+    val exerciseKcal: Double = 0.0,
 ) {
+    /** The TDEE the target was built from — higher than the multiplier baseline only on a big exercise day. */
+    val tdeeKcal: Double
+        get() = target.tdeeKcal
+
     val remainingKcal: Double
         get() = target.targetKcal - intakeKcal
 

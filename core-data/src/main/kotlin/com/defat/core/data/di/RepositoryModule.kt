@@ -1,12 +1,18 @@
 package com.defat.core.data.di
 
+import com.defat.core.data.repository.ExerciseRepositoryImpl
+import com.defat.core.data.repository.FoodRepositoryImpl
 import com.defat.core.data.repository.MealRepositoryImpl
 import com.defat.core.data.repository.ProfileRepositoryImpl
 import com.defat.core.data.repository.SettingsRepositoryImpl
+import com.defat.core.data.repository.WaterRepositoryImpl
 import com.defat.core.data.repository.WeightRepositoryImpl
+import com.defat.core.domain.repository.ExerciseRepository
+import com.defat.core.domain.repository.FoodRepository
 import com.defat.core.domain.repository.MealRepository
 import com.defat.core.domain.repository.ProfileRepository
 import com.defat.core.domain.repository.SettingsRepository
+import com.defat.core.domain.repository.WaterRepository
 import com.defat.core.domain.repository.WeightRepository
 import dagger.Binds
 import dagger.Module
@@ -39,4 +45,16 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindWeightRepository(impl: WeightRepositoryImpl): WeightRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindFoodRepository(impl: FoodRepositoryImpl): FoodRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindExerciseRepository(impl: ExerciseRepositoryImpl): ExerciseRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindWaterRepository(impl: WaterRepositoryImpl): WaterRepository
 }

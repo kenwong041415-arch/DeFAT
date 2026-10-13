@@ -23,4 +23,13 @@ data class Meal(
      * database (mappers).
      */
     val mealType: MealType = MealType.SNACK,
+    /**
+     * The 食物庫 row this meal was picked from, or null for a typed meal
+     * (plan §8.7). Kept only so the meal can be re-opened in 點食法.
+     * [kcal] and the macros above are the meal's own final numbers and are
+     * never recomputed from the current library row.
+     */
+    val baseFoodId: String? = null,
+    /** The modifier ids chosen in 點食法, same purpose as [baseFoodId]. */
+    val modifierIds: List<String> = emptyList(),
 )

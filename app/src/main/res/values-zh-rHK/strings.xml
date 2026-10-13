@@ -146,7 +146,6 @@
     <string name="meal_calc_from_macros">由營養素計算卡路里</string>
     <string name="meal_macro_mismatch">卡路里同營養素對唔上，請檢查一下。</string>
     <string name="meal_delete_confirm">確定刪除呢一餐？</string>
-    <string name="meal_frequent_title">常用食物</string>
     <string name="meal_frequent_chip">%1$s · %2$d 千卡</string>
     <string name="meal_frequent_add">填入 %1$s</string>
     <string name="meal_kcal_required">請輸入卡路里，一定要大過 0。</string>
@@ -161,4 +160,125 @@
     <string name="error_required">必填</string>
     <string name="error_min_age_18">DeFAT 只適用於 18 歲以上。請直接向你嘅教練查詢。</string>
     <string name="error_out_of_range">請輸入 %1$s 至 %2$s 之間嘅數值</string>
+
+    <!-- ===== Phase 1.7 PR B: 食物庫 / 點食法 (plan §8) ===== -->
+    <string name="food_find_label">搵食物</string>
+    <string name="food_frequent_title">常用</string>
+    <string name="food_no_results">食物庫入面搵唔到。</string>
+    <string name="food_manual_entry">搵唔到？自己加</string>
+    <string name="food_range_kcal">%1$d–%2$d 千卡</string>
+    <string name="food_badge_approx">約</string>
+    <string name="food_badge_estimate">估算</string>
+    <string name="food_badge_trainer">教練</string>
+    <string name="food_badge_custom">自訂</string>
+    <string name="food_category_tea_restaurant">茶餐廳</string>
+    <string name="food_category_dim_sum">點心</string>
+    <string name="food_category_roast_rice">燒味飯</string>
+    <string name="food_category_noodle">粉麵</string>
+    <string name="food_category_fast_food">快餐</string>
+    <string name="food_category_drink">飲品</string>
+    <string name="food_category_staple">主食</string>
+    <string name="food_category_snack">小食</string>
+    <string name="food_group_rice_amount">飯量</string>
+    <string name="food_group_meat_cut">肉款</string>
+    <string name="food_group_skin">皮</string>
+    <string name="food_group_sauce">醬汁</string>
+    <string name="food_group_sweetness">甜度</string>
+    <string name="food_group_milk">奶</string>
+    <string name="food_group_butter">牛油</string>
+    <string name="food_group_peanut_butter">花生醬</string>
+    <string name="food_group_add_ons">加配料</string>
+    <string name="food_default_normal">正常</string>
+    <string name="food_default_standard_cut">半肥瘦</string>
+    <string name="food_default_none">無</string>
+    <string name="food_adjust_open">調整點食法</string>
+    <string name="food_adjust_dish_line">%1$s · %2$s</string>
+    <string name="food_back_to_search">返回搜尋結果</string>
+    <string name="food_quantity_label">件數</string>
+    <string name="food_quantity_unit">件</string>
+    <string name="food_quantity_decrease">減一件</string>
+    <string name="food_quantity_increase">加一件</string>
+    <string name="food_arith_heading">數字點計出嚟</string>
+    <string name="food_arith_base">基礎：%1$s</string>
+    <string name="food_arith_clamped">已當作 0 千卡，唔會低過零。</string>
+    <string name="food_option_selected">%1$s：%2$s，已選</string>
+    <string name="food_option_unselected">%1$s：%2$s</string>
+    <string name="food_macro_value">%1$s：%2$s 克</string>
+    <string name="food_macro_unknown">%1$s：未有公開數字</string>
+    <string name="food_macros_unknown">呢款食物有部分營養素未有公開數字，知道嘅話可以自己填。</string>
+    <string name="food_log_button">記錄</string>
+
+    <string name="food_editor_title">食物庫</string>
+    <string name="food_editor_note">呢啲係公開資料嘅初步估算。你改過嘅數字會永久取代佢哋。</string>
+    <string name="food_editor_items_heading">食物</string>
+    <string name="food_editor_modifiers_heading">點食法調整</string>
+    <string name="food_editor_edit_title">修改 %1$s</string>
+    <string name="food_editor_delta_value">%1$s 千卡</string>
+    <string name="food_editor_kcal_delta">卡路里變化（千卡）</string>
+    <string name="food_editor_protein_delta">蛋白質變化（克）</string>
+    <string name="food_editor_carbs_delta">碳水變化（克）</string>
+    <string name="food_editor_fat_delta">脂肪變化（克）</string>
+    <string name="food_editor_blank_means_unknown">冇數字嘅營養素就留空。</string>
+
+    <!-- ===== Exercise (plan §10) ===== -->
+    <string name="exercise_title">運動</string>
+    <string name="exercise_section_total">共 %1$d 千卡</string>
+    <string name="exercise_add">加運動</string>
+    <string name="exercise_empty">仲未有運動記錄。</string>
+    <string name="exercise_entry_line">%1$s · %2$d 分鐘</string>
+    <string name="exercise_delete">刪除呢項運動</string>
+    <string name="exercise_delete_confirm">確定刪除呢項運動記錄？</string>
+    <string name="exercise_activity_label">運動項目</string>
+    <string name="exercise_activity_walking">步行</string>
+    <string name="exercise_activity_jogging">慢跑</string>
+    <string name="exercise_activity_cycling_moderate">踏單車（中速）</string>
+    <string name="exercise_activity_swimming">游水</string>
+    <string name="exercise_activity_weight_training">重量訓練</string>
+    <string name="exercise_activity_weight_training_light">重量訓練（輕）</string>
+    <string name="exercise_activity_weight_training_heavy">重量訓練（重）</string>
+    <string name="exercise_activity_hiit">HIIT</string>
+    <string name="exercise_activity_hiking">行山</string>
+    <string name="exercise_activity_badminton">羽毛球</string>
+    <string name="exercise_activity_basketball">籃球</string>
+    <string name="exercise_activity_yoga">瑜伽</string>
+    <string name="exercise_level_label">強度</string>
+    <string name="exercise_level_light">輕</string>
+    <string name="exercise_level_medium">中</string>
+    <string name="exercise_level_heavy">重</string>
+    <string name="exercise_level_chip">%1$s（MET %2$s）</string>
+    <string name="exercise_minutes">分鐘</string>
+    <string name="exercise_minutes_unit">分鐘</string>
+    <string name="exercise_formula">MET × 體重(kg) × 小時 = kcal</string>
+    <string name="exercise_inputs_line">MET %1$s · 你嘅體重 %2$s 公斤</string>
+    <string name="exercise_formula_values">%1$s × %2$s × %3$s = %4$d 千卡</string>
+    <string name="exercise_enter_minutes">輸入分鐘數，就會睇到數字。</string>
+    <string name="exercise_target_note">你平時嘅運動已經計咗入活動量。只有今日記錄嘅運動多過平時，今日目標先會上調。</string>
+
+    <!-- ===== Water (plan §11) ===== -->
+    <string name="water_title">飲水</string>
+    <string name="water_progress">%1$s / %2$s 毫升</string>
+    <string name="water_goal_hint">建議：每公斤體重 35 毫升。</string>
+    <string name="water_cup_filled">第 %1$d 杯，已飲</string>
+    <string name="water_cup_empty">第 %1$d 杯</string>
+    <string name="water_custom_label">其他份量</string>
+    <string name="water_unit_ml">毫升</string>
+    <string name="water_add">加</string>
+
+    <!-- ===== Streak (plan §12) ===== -->
+    <string name="streak_chip">跟足計劃日數：%1$d</string>
+
+    <!-- ===== 數據來源 (plan §13) ===== -->
+    <string name="sources_title">數據來源</string>
+    <string name="sources_intro">DeFAT 入面每個數字都有出處。呢頁會講明每個數字嚟自邊度，同你可以幾信佢。</string>
+    <string name="sources_bmr_title">基礎代謝（BMR）</string>
+    <string name="sources_bmr_body">基礎代謝係你身體休息時用幾多能量。知道你嘅體脂率，DeFAT 就用 Katch-McArdle 公式；唔知道，就用 Henry／Oxford（2005）公式。揀用 Henry 公式係教練以專業角度作出嘅決定。暫時未有公開研究喺華人人口入面比較過 Henry 同 Mifflin-St Jeor，所以呢個數字只係估算。</string>
+    <string name="sources_tdee_title">每日消耗（TDEE）</string>
+    <string name="sources_tdee_body">每日消耗係 BMR 乘以你揀嘅活動量，呢個活動量已經包咗你平時嘅運動。有記錄運動嘅日子，我哋取兩種算法較高嘅一個，唔會重複計同一次運動。</string>
+    <string name="sources_food_title">食物數字</string>
+    <string name="sources_food_body">建立食物庫嘅時候，連唔到政府嘅官方食物數據庫，而搵到嘅公開清單，數字之間最多可以差一倍。所以每款食物都標明來源：約（標準食物成分值）、估算（傳媒或營養師嘅數字）、教練（教練自己嘅數字）。教練嘅數字會取代其他所有數字。</string>
+    <string name="sources_water_title">飲水建議</string>
+    <string name="sources_water_body">每日飲水建議係每公斤體重 35 毫升，向下取整到 100 毫升，最少 1,500 毫升。呢個係教練常用嘅參考做法，並唔係醫療指標。</string>
+    <string name="sources_days_title">一日幾時開始</string>
+    <string name="sources_days_body">一日預設喺凌晨 4 點開始，你可以喺「我」嗰頁更改。喺呢個時間之前記錄嘅餐，會算落前一日。更改時間唔會搬走任何已儲存嘅記錄，只係分日嘅方式會變。</string>
+    <string name="sources_disclaimer_heading">醫療免責聲明</string>
 </resources>

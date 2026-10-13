@@ -7,8 +7,12 @@ enum class BmrMethod {
     MIFFLIN_ST_JEOR,
 }
 
-/** Which TDEE computation mode produced the result — see docs/04. */
-enum class TdeeSource { ACTIVITY_MULTIPLIER, WEARABLE }
+/**
+ * Which TDEE computation mode produced the result — see docs/04.
+ * MANUAL_EXERCISE: a day with logged exercise whose logged total beat the
+ * activity-multiplier baseline (DayTdeeCalculator).
+ */
+enum class TdeeSource { ACTIVITY_MULTIPLIER, WEARABLE, MANUAL_EXERCISE }
 
 data class DailyTarget(
     val bmrKcal: Double,

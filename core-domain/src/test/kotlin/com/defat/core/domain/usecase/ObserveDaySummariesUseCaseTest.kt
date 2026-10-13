@@ -1,8 +1,10 @@
 package com.defat.core.domain.usecase
 
+import com.defat.core.domain.fake.FakeExerciseRepo
 import com.defat.core.domain.fake.FakeMealRepo
 import com.defat.core.domain.fake.FakeProfileRepo
 import com.defat.core.domain.fake.FakeSettingsRepo
+import com.defat.core.domain.fake.testExercise
 import com.defat.core.domain.fake.testMeal
 import com.defat.core.domain.fake.testProfile
 import java.time.Clock
@@ -25,8 +27,11 @@ class ObserveDaySummariesUseCaseTest {
     private fun at(day: Int, hour: Int, minute: Int): Instant =
         LocalDateTime.of(2026, 10, day, hour, minute).atZone(zone).toInstant()
 
-    private fun useCase(meals: FakeMealRepo, profile: FakeProfileRepo = FakeProfileRepo(testProfile())) =
-        ObserveDaySummariesUseCase(profile, meals, FakeSettingsRepo(), ComputeDailyTargetUseCase(), clock)
+    private fun useCase(
+        meals: FakeMealRepo,
+        profile: FakeProfileRepo = FakeProfileRepo(testProfile()),
+        exercise: FakeExerciseRepo = FakeExerciseRepo(),
+    ) = ObserveDaySummariesUseCase(profile, meals, exercise, FakeSettingsRepo(), ComputeDailyTargetUseCase(), clock)
 
     @Test
     fun `lists only days with meals, newest first, bucketed by logical day`() = runTest {
@@ -58,5 +63,23 @@ class ObserveDaySummariesUseCaseTest {
     fun `no profile gives an empty list`() = runTest {
         val meals = FakeMealRepo(listOf(testMeal("a", at(12, 12, 0))))
         assertTrue(useCase(meals, FakeProfileRepo(null))().first().isEmpty())
+    }
+
+    @Test
+    fun `a day's target includes that day's exercise, matching Home`() = runTest {
+        val meals = FakeMealRepo(
+            listOf(
+                testMeal("a", at(11, 12, 0), kcal = 500.0),
+                testMeal("b", at(12, 12, 0), kcal = 500.0),
+            ),
+        )
+        // 1500 kcal of exercise on the 12th only.
+        val exercise = FakeExerciseRepo(listOf(testExercise("long", at(12, 18, 0), kcal = 1500.0)))
+
+        val days = useCase(meals, exercise = exercise)().first()
+
+        assertEquals(LocalDate.of(2026, 10, 12), days[0].date)
+        assertEquals(3332.6 * 0.8, days[0].targetKcal, 1e-6)
+        assertEquals(2065.84, days[1].targetKcal, 1e-6)
     }
 }

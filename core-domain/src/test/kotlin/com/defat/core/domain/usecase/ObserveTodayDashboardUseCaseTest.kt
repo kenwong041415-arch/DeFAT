@@ -1,8 +1,10 @@
 package com.defat.core.domain.usecase
 
+import com.defat.core.domain.fake.FakeExerciseRepo
 import com.defat.core.domain.fake.FakeMealRepo
 import com.defat.core.domain.fake.FakeProfileRepo
 import com.defat.core.domain.fake.FakeSettingsRepo
+import com.defat.core.domain.fake.testExercise
 import com.defat.core.domain.fake.testMeal
 import com.defat.core.domain.fake.testProfile
 import java.time.Clock
@@ -30,7 +32,8 @@ class ObserveTodayDashboardUseCaseTest {
         meals: FakeMealRepo,
         settings: FakeSettingsRepo = FakeSettingsRepo(),
         profile: FakeProfileRepo = FakeProfileRepo(testProfile()),
-    ) = ObserveTodayDashboardUseCase(profile, meals, settings, ComputeDailyTargetUseCase(), clock)
+        exercise: FakeExerciseRepo = FakeExerciseRepo(),
+    ) = ObserveTodayDashboardUseCase(profile, meals, exercise, settings, ComputeDailyTargetUseCase(), clock)
 
     @Test
     fun `a 01-30 snack counts toward the previous day`() = runTest {
@@ -92,5 +95,47 @@ class ObserveTodayDashboardUseCaseTest {
 
         val threeYearsAgo = dashboard(LocalDate.of(2023, 10, 13)).first()
         assertNotNull(threeYearsAgo)
+    }
+
+    // ---- Phase 1.7 PR B: manually logged exercise (plan §10) ----
+
+    @Test
+    fun `a day with no exercise has exactly the multiplier target`() = runTest {
+        val dashboard = useCase(FakeMealRepo())
+        val rollup = dashboard(LocalDate.of(2026, 10, 12)).first()!!
+
+        assertEquals(0.0, rollup.exerciseKcal, 0.0)
+        // testProfile(): 25 % body fat, 80 kg -> Katch-McArdle BMR 1666, MODERATE x 1.55.
+        assertEquals(2582.3, rollup.target.tdeeKcal, 1e-6)
+        assertEquals(2065.84, rollup.target.targetKcal, 1e-6)
+        assertEquals(com.defat.core.domain.model.TdeeSource.ACTIVITY_MULTIPLIER, rollup.target.tdeeSource)
+    }
+
+    @Test
+    fun `a small session leaves the target alone and a big one raises it`() = runTest {
+        val small = FakeExerciseRepo(listOf(testExercise("run", at(12, 18, 0), kcal = 300.0)))
+        val big = FakeExerciseRepo(listOf(testExercise("long", at(12, 18, 0), kcal = 1500.0)))
+        val day = LocalDate.of(2026, 10, 12)
+
+        val withSmall = useCase(FakeMealRepo(), exercise = small)(day).first()!!
+        assertEquals(300.0, withSmall.exerciseKcal, 1e-9)
+        // 1666 x 1.1 + 300 = 2132.6 < 2582.3: the multiplier already assumed this.
+        assertEquals(2582.3, withSmall.target.tdeeKcal, 1e-6)
+        assertEquals(2065.84, withSmall.target.targetKcal, 1e-6)
+
+        val withBig = useCase(FakeMealRepo(), exercise = big)(day).first()!!
+        // 1666 x 1.1 + 1500 = 3332.6 beats 2582.3.
+        assertEquals(3332.6, withBig.target.tdeeKcal, 1e-6)
+        assertEquals(3332.6 * 0.8, withBig.target.targetKcal, 1e-6)
+        assertEquals(com.defat.core.domain.model.TdeeSource.MANUAL_EXERCISE, withBig.target.tdeeSource)
+    }
+
+    @Test
+    fun `exercise logged at 01-30 counts toward the previous day`() = runTest {
+        val late = FakeExerciseRepo(listOf(testExercise("late", at(13, 1, 30), kcal = 1500.0)))
+        val dashboard = useCase(FakeMealRepo(), exercise = late)
+
+        assertEquals(1500.0, dashboard(LocalDate.of(2026, 10, 12)).first()!!.exerciseKcal, 1e-9)
+        assertEquals(0.0, dashboard(LocalDate.of(2026, 10, 13)).first()!!.exerciseKcal, 1e-9)
     }
 }

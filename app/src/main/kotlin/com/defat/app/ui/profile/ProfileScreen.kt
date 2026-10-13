@@ -53,6 +53,8 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun ProfileRoute(
     onLogWeight: () -> Unit,
+    onOpenFoodLibrary: () -> Unit,
+    onOpenSources: () -> Unit,
     onAddMeal: () -> Unit,
     onTabSelected: (DefatTab) -> Unit,
     viewModel: ProfileViewModel = hiltViewModel(),
@@ -71,6 +73,8 @@ fun ProfileRoute(
         onGoalWeightChange = { text -> viewModel.updateForm { it.copy(goalTargetWeightText = text) } },
         onSave = viewModel::save,
         onLogWeight = onLogWeight,
+        onOpenFoodLibrary = onOpenFoodLibrary,
+        onOpenSources = onOpenSources,
         onAddMeal = onAddMeal,
         onTabSelected = onTabSelected,
     )
@@ -88,6 +92,8 @@ fun ProfileScreen(
     onGoalWeightChange: (String) -> Unit,
     onSave: () -> Unit,
     onLogWeight: () -> Unit,
+    onOpenFoodLibrary: () -> Unit,
+    onOpenSources: () -> Unit,
     onAddMeal: () -> Unit,
     onTabSelected: (DefatTab) -> Unit,
 ) {
@@ -145,7 +151,12 @@ fun ProfileScreen(
                         Text(stringResource(R.string.weight_title))
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    // 食物庫 (plan §8.5) and 數據來源 (plan §13).
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LinkRow(title = stringResource(R.string.food_editor_title), onClick = onOpenFoodLibrary)
+                    LinkRow(title = stringResource(R.string.sources_title), onClick = onOpenSources)
+
+                    Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -265,6 +276,20 @@ fun ProfileScreen(
     }
 }
 
+@Composable
+private fun LinkRow(title: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Text("\u203A", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
 @Preview(name = "Light", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_NO)
 @Preview(name = "Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
 @Composable
@@ -298,7 +323,7 @@ private fun ProfileScreenPreview() {
                     goalTargetWeightText = "75",
                 ),
                 dailyTarget = target,
-                appVersion = "0.3.0-phase1.7a",
+                appVersion = "0.3.0-phase1.7b",
             ),
             dayStart = LocalTime.of(4, 0),
             dayStartOptions = listOf(LocalTime.of(0, 0), LocalTime.of(4, 0), LocalTime.of(8, 0)),
@@ -309,6 +334,8 @@ private fun ProfileScreenPreview() {
             onGoalWeightChange = {},
             onSave = {},
             onLogWeight = {},
+            onOpenFoodLibrary = {},
+            onOpenSources = {},
             onAddMeal = {},
             onTabSelected = {},
         )

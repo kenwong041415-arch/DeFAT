@@ -1,5 +1,6 @@
 package com.defat.app.ui
 
+import com.defat.app.fake.FakeExerciseRepository
 import com.defat.app.fake.FakeMealRepository
 import com.defat.app.fake.FakeProfileRepository
 import com.defat.app.fake.FakeSettingsRepository
@@ -78,6 +79,7 @@ class HistoryViewModelTest {
         val summaries = ObserveDaySummariesUseCase(
             profileRepository,
             mealRepository,
+            FakeExerciseRepository(),
             FakeSettingsRepository(),
             ComputeDailyTargetUseCase(),
             TestClock.clock,

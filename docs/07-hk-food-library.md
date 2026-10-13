@@ -238,7 +238,7 @@ These are estimates, and the owner should correct them.
 | Dish | Reconstructed | Published |
 |---|---|---|
 | 餐蛋麵, 1 slice luncheon meat / 2 slices + oil | **614** / **788** | 600 / 785 |
-| 港式奶茶, hot 走糖 / iced 全糖 | **104** / **253** | 112 / ~250 |
+| 港式奶茶, hot 半糖 / iced 全糖 | **104** / **253** | 112 / ~250 |
 | 西多士, 走醬走牛油走糖漿 / +PB+butter / full | **300** / **495** / **710** | 388 / 522 / 850 |
 | 叉燒飯, 瘦+少飯+走汁 / 半肥瘦+汁 / 加飯+多汁 | **590** / **939** / **1068** | 652 / 720 / 1000 |
 
@@ -282,15 +282,55 @@ Starting groups and deltas — **all draft, all for the owner to overrule**:
 
 | Group | Options (kcal delta) | Applies to |
 |---|---|---|
-| 飯量 | 少飯 −130 · 正常 0 · 加飯 +130 | ROAST_RICE, TEA_RESTAURANT rice dishes |
-| 肉款 | 瘦 −120 · 半肥瘦 0 | 叉燒 dishes |
-| 皮 | 去皮 −90 · 正常 0 | 油雞, 白切雞, 燒鵝 |
+| 飯量 | 少飯 −130 · 正常 0 · 加飯 +130 | ROAST_RICE + the named rice dishes |
+| 肉款 | 瘦 −120 · 半肥瘦 0 | 叉燒飯 |
+| 皮 | 去皮 −90 · 正常 0 | 豉油雞飯, 燒鵝飯 |
 | 醬汁 | 走汁 −100 · 少汁 −50 · 正常 0 | ROAST_RICE, NOODLE |
-| 甜度 | 走糖 −48 · 半糖 −24 · 正常 0 | DRINK |
-| 奶 | 走奶 −80 · 少奶 −40 · 正常 0 | DRINK |
-| 牛油 | 走牛油 −100 · 正常 0 | 西多士, 多士, 菠蘿油 |
-| 花生醬 | 加花生醬 +95 · 無 0 | 西多士, 多士 |
-| 加配料 | 加蛋 +72 · 加午餐肉 +144 · 加菜 +15 | NOODLE, TEA_RESTAURANT |
+| 甜度 | 走糖 −48 · 半糖 −24 · 正常 0 | 凍奶茶 only (see 4 below) |
+| 奶 | 走奶 −80 · 少奶 −40 · 正常 0 | 凍奶茶 only |
+| 牛油 | 走牛油 −100 · 正常 0 | 西多士, 牛油多士 |
+| 花生醬 | 走花生醬 −95 (西多士) · 加花生醬 +95 (牛油多士) | see 1 below |
+| 糖漿 | 加糖漿 +120 · 無 0 | 西多士, 牛油多士 |
+| 加蛋 | 加蛋 +72 | NOODLE, TEA_RESTAURANT |
+| 加午餐肉 | 加午餐肉 +144 | NOODLE, TEA_RESTAURANT |
+| 加菜 | 加菜 +15 | NOODLE, TEA_RESTAURANT |
+
+**Five corrections made in the Phase 1.7 PR B review**, after the
+implementation pass reported that the first version of this table was
+internally inconsistent with §6.1. Each is a defect in this doc, not in the
+code:
+
+1. **花生醬 had the wrong sign for 西多士.** §6.1 reconstructs the 西多士 base
+   at 495 kcal *including* peanut butter, so offering 加花生醬 +95 on it would
+   add a second helping while leaving no way to remove the first. Split by
+   item: 走花生醬 −95 on 西多士 (whose base has it), 加花生醬 +95 on 牛油多士
+   (whose base does not).
+2. **The syrup swing was unselectable.** §6.1's loaded 西多士 build includes
+   糖漿 2 湯匙 at 120 kcal, but no 糖漿 group existed, so the student who takes
+   syrup had no way to say so. Added at **+120** — the §6.1 line item.
+   (The implementation pass proposed +215 from `710 − 495`; that difference is
+   syrup *plus* a second tablespoon of peanut butter, so +215 would
+   double-count the peanut butter the 花生醬 group already handles.)
+3. **加配料 was one exclusive group, so 加蛋 and 加午餐肉 could not be
+   combined** — and 餐蛋麵 with both is an entirely ordinary order. Each add-on
+   is now its own group. No code change was needed: the rule is "at most one
+   modifier per `groupId`", so separate groups combine freely.
+4. **The drink modifiers were scoped to the whole DRINK category, and the
+   only drink row was iced full-sugar.** A student drinking hot milk tea had
+   no correct row, and 走糖 on the iced row (253 → 205) does not reach the hot
+   figure, because hot and iced differ in milk volume as well as sugar. Added
+   a **熱奶茶 row at 104 kcal** from §6.1, and scoped 甜度 and 奶 to the iced
+   row by item id so they cannot be mis-applied to it. The hot row carries no
+   modifiers until the owner supplies hot-drink deltas.
+5. **§6.1's milk-tea row was mislabelled.** It read "hot 走糖 / iced 全糖" for
+   104 / 253, but the build-up behind 104 is 淡奶 60 ml (80) + 糖 1.5 茶匙 (24),
+   which is **半糖**, not 走糖 — hot 走糖 would be about 80. The label is
+   corrected above; the number was always right.
+
+**白切雞飯 / 去皮 remains ambiguous and is deliberately left out.** §4C's note
+on that row reads 去皮, which the implementation pass read as the base already
+being skinless. That reading is self-consistent, so 去皮 is offered only on
+豉油雞飯 and 燒鵝飯. The owner should say which it is.
 
 Rules that follow:
 
@@ -348,3 +388,46 @@ the bases.
 7. **Sanity-check the composition estimates in §6.1** (bread, butter, peanut
    butter, evaporated milk, rice per bowl, 叉燒 per 100 g). They are the
    foundation under every reconstructed base.
+
+## 8. What the Phase 1.7 seed files do with these tables
+
+The shipped seed is `core-data/src/main/resources/food_seed.csv` (51 rows) and
+`food_modifier_seed.csv` (15 rows). Every number in them is a number in this
+doc; where a cell was blank here it is blank there. Confidence is not in the
+files — it is computed from source and spread (§3). The owner edits the two
+CSVs in a spreadsheet; an edit made inside the app (`editedByOwner`) always wins
+over a later seed update.
+
+Decisions made while turning §4 and §6 into rows — **owner to confirm or
+overrule**:
+
+1. **Rows that §6.1 explains are one row, not two.** 叉燒飯 is a single base
+   row at **939** (正常飯、半肥瘦、有汁) with 瘦 / 少飯 / 加飯 / 走汁 as
+   modifiers, replacing the two §4C 叉燒飯 rows. The same goes for 港式奶茶
+   (base **253**, 凍、全糖; replaces the 熱少甜 ~112 and 凍全糖 ~250 rows),
+   西多士 (base **495**, 花生醬 + 牛油, no syrup) and 餐蛋麵 (base **614**,
+   1 片午餐肉). Their ranges are cleared and their source is
+   `COMPOSITION_TABLE`, because the base is a §6.1 reconstruction. Which of
+   §6.1's configurations counts as "standard as-served" is a judgement call.
+2. **Rows with an unexplained range keep it.** `kcal` holds the midpoint of the
+   published range (the app pre-fills it rounded to 10 kcal) and
+   `kcalLow`/`kcalHigh` hold the range itself. They are `MEDIA`, so `LOW`.
+3. **Dim sum is per 件.** 蒸鳳爪 ships at 40 kcal per 件. Three rows are
+   **held** because their only figure is for "1 碟" with no piece count, and
+   per-件 cannot be derived without inventing one: 腸粉, 豉汁蒸排骨, 炸兩.
+4. **Gaps that cannot be filled from this doc.** 雲吞麵's protein is a range
+   (18–22) and the table has one protein cell, so it is left blank. No modifier
+   has a macro delta, because §6.3 gives kcal only — so choosing any modifier
+   makes the dish's macros "no number published" rather than unchanged.
+5. **Modifier sources.** Deltas derived from the §6.1 composition values are
+   `COMPOSITION_TABLE`. 去皮 −90 and 加菜 +15 have no §6.1 basis and are
+   `MEDIA` (so 「估算」).
+6. **`appliesTo` is item-level where §6.3 says so.** §6.3 allows "FoodCategory
+   or an explicit item list"; 瘦 applies to 叉燒飯 only, 去皮 to 豉油雞飯 and
+   燒鵝飯, 走牛油 to 西多士 and 牛油多士, 加花生醬 to 牛油多士. 白切雞飯 is
+   left out of 去皮 because its row is already 去皮.
+
+Open questions this surfaced for §7: §6.3 has no 糖漿 modifier, yet syrup is
+about 215 kcal (710 − 495) in the §6.1 reconstruction of 西多士, so that swing
+cannot be selected; 加配料 is one exclusive group, so 加蛋 and 加午餐肉 cannot be combined;
+and 加配料 applies to every 茶餐廳 item, including ones where it makes no sense.

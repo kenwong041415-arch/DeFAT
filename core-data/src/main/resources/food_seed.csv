@@ -1,0 +1,53 @@
+id,nameZh,nameEn,portionLabel,portionGrams,kcal,proteinG,carbsG,fatG,kcalLow,kcalHigh,source,category
+big_mac,巨無霸,Big Mac,1 個,,496,25.6,42.7,24.6,,,OFFICIAL,FAST_FOOD
+mcnuggets_6,麥樂雞（6 件）,McNuggets (6 pieces),6 件（120 g）,120,316,18.3,,,,,OFFICIAL,FAST_FOOD
+mcnuggets_4,麥樂雞（4 件）,McNuggets (4 pieces),4 件,,211,12.2,,,,,OFFICIAL,FAST_FOOD
+filet_o_fish,麥香魚,Filet-O-Fish,1 個,,321,,,,,,OFFICIAL,FAST_FOOD
+fries_medium,薯條（中）,Fries (medium),1 包,,313,,,,,,OFFICIAL,FAST_FOOD
+fries_small,薯條（細）,Fries (small),1 包,,225,,,,,,OFFICIAL,FAST_FOOD
+apple_pie,蘋果批,Apple pie,1 件,,228,,,,,,OFFICIAL,FAST_FOOD
+corn_cup,粒粒粟米杯,Corn cup,1 杯,,81,,,,,,OFFICIAL,FAST_FOOD
+chicken_wings_2,脆香雞翼,Crispy chicken wings (2 pieces),2 件,,242,,,,,,OFFICIAL,FAST_FOOD
+white_rice,白飯,Cooked white rice,1 碗（約 200 g 熟）,200,260,5,58,0.6,,,COMPOSITION_TABLE,STAPLE
+egg,雞蛋,Egg,1 隻（50 g）,50,72,6.3,0.4,4.8,,,COMPOSITION_TABLE,STAPLE
+chicken_breast,雞胸肉（熟，無皮）,Chicken breast (cooked and skinless),100 g,100,165,31,0,3.6,,,COMPOSITION_TABLE,STAPLE
+luncheon_meat,午餐肉,Luncheon meat,1 片,,144,,,,,,MEDIA,STAPLE
+rice_noodles,米線（熟）,Rice noodles (cooked),1 碗（約 200 g）,200,280,,,,,,MEDIA,STAPLE
+fish_ball,魚蛋,Fish ball,1 粒,,21,,,,,,MEDIA,SNACK
+beef_brisket_hor_fun,牛腩湯河粉,Beef brisket soup flat rice noodles,1 碗,,670,40,86,19,,,DIETITIAN,NOODLE
+dry_fried_yee_mein,干燒伊麵,Dry-fried E-fu noodles,1 碟,,1300,,,,,,DIETITIAN,NOODLE
+dry_fried_beef_hor_fun,乾炒牛河,Dry-fried beef flat rice noodles,1 碟,,910,,,,850,970,MEDIA,NOODLE
+western_fried_rice,西炒飯,Western-style fried rice,1 碟,,1000,,,,,,MEDIA,TEA_RESTAURANT
+baked_pork_chop_rice,焗豬扒飯,Baked pork chop rice,1 碟（約 650 g）,650,1259.5,,,,1235,1284,MEDIA,TEA_RESTAURANT
+curry_beef_brisket_rice,咖喱牛腩飯,Curry beef brisket rice,1 碟,,1300,,,,,,MEDIA,TEA_RESTAURANT
+cha_siu_rice,叉燒飯,Barbecued pork rice,1 碟（正常飯、半肥瘦、有汁）,,939,,,,,,COMPOSITION_TABLE,ROAST_RICE
+roast_pork_rice,燒肉飯,Roast pork rice,1 碟,,930,36,,,,,MEDIA,ROAST_RICE
+roast_goose_rice,燒鵝飯,Roast goose rice,1 碟,,970,,,,,,MEDIA,ROAST_RICE
+soy_sauce_chicken_rice,豉油雞飯,Soy sauce chicken rice,1 碟,,770,27,,,,,MEDIA,ROAST_RICE
+poached_chicken_rice,白切雞飯,Poached chicken rice,1 碟（去皮）,,550,,,,500,600,MEDIA,ROAST_RICE
+wonton_noodle_soup,雲吞麵（湯）,Wonton noodle soup,1 碗,,415,,,,380,450,MEDIA,NOODLE
+satay_beef_noodles,沙嗲牛肉麵,Satay beef noodle soup,1 碗,,658.5,,,,650,667,MEDIA,NOODLE
+five_spice_pork_instant_noodles,五香肉丁公仔麵,Five-spice pork cube instant noodles,1 碗,,710,,,,,,MEDIA,NOODLE
+luncheon_egg_instant_noodles,午餐肉煎蛋公仔麵,Instant noodles with luncheon meat and fried egg,1 碗,,785,,,,,,MEDIA,NOODLE
+set_egg_noodles,餐蛋麵,Luncheon meat and egg noodles,1 碗（1 片午餐肉）,,614,,,,,,COMPOSITION_TABLE,NOODLE
+ham_macaroni,火腿通粉,Ham macaroni soup,1 碗,,310,,,,,,MEDIA,NOODLE
+set_egg_sandwich,餐蛋治,Luncheon meat and egg sandwich,1 份,,565,,,,,,MEDIA,TEA_RESTAURANT
+ham_egg_sandwich,火腿蛋治,Ham and egg sandwich,1 份,,466,,,,452,480,MEDIA,TEA_RESTAURANT
+french_toast,西多士,Hong Kong-style French toast,1 份（花生醬、牛油、冇糖漿）,,495,,,,,,COMPOSITION_TABLE,TEA_RESTAURANT
+butter_bun,奶油豬,Butter bun,1 個,,344,,,,,,MEDIA,TEA_RESTAURANT
+buttered_toast,牛油多士,Buttered toast,1 份,,168,,,,,,MEDIA,TEA_RESTAURANT
+scrambled_eggs,炒蛋,Scrambled eggs,1 份,,220,,,,,,MEDIA,TEA_RESTAURANT
+fried_egg,煎蛋,Fried egg,1 隻,,90,,,,,,MEDIA,TEA_RESTAURANT
+egg_tart,蛋撻,Egg tart,1 個,,217,,,,,,MEDIA,SNACK
+sticky_rice_chicken,糯米雞,Sticky rice in lotus leaf,1 件,,600,,,,,,MEDIA,DIM_SUM
+milk_tea,港式奶茶,Hong Kong-style milk tea,1 杯（凍、全糖）,,253,,,,,,COMPOSITION_TABLE,DRINK
+milk_tea_hot,熱奶茶,Hong Kong-style milk tea (hot),1 杯（熱、半糖）,,104,,,,,,COMPOSITION_TABLE,DRINK
+har_gow,蝦餃,Shrimp dumpling,1 件,,47,,,,44,50,MEDIA,DIM_SUM
+siu_mai,燒賣,Pork siu mai,1 件,,62,,,,,,MEDIA,DIM_SUM
+char_siu_bao,叉燒包,Barbecued pork bun,1 件,,188.5,,,,137,240,MEDIA,DIM_SUM
+fried_spring_roll,炸春卷,Fried spring roll,1 件,,150,,,,,,MEDIA,DIM_SUM
+steamed_chicken_feet,蒸鳳爪,Steamed chicken feet,1 件,,40,,,,,,COMPOSITION_TABLE,DIM_SUM
+mai_lai_go,馬拉糕,Steamed sponge cake,1 件,,370,,,,,,MEDIA,DIM_SUM
+tamjai_clear_broth,譚仔 清湯湯底,Tam Jai clear broth,1 碗,,268.5,,,,207,330,MEDIA,FAST_FOOD
+tamjai_spicy_broth,譚仔 麻辣湯底,Tam Jai spicy broth,1 碗,,480.5,,,,436,525,MEDIA,FAST_FOOD
+tamjai_pork_belly,譚仔 腩肉,Tam Jai pork belly,1 份（38 g）,38,150,,,12.7,140,160,MEDIA,FAST_FOOD

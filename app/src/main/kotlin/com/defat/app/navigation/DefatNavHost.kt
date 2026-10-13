@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.defat.app.StartDestination
 import com.defat.app.ui.component.DefatTab
+import com.defat.app.ui.food.FoodLibraryEditorRoute
 import com.defat.app.ui.history.HistoryRoute
 import com.defat.app.ui.home.HomeRoute
 import com.defat.app.ui.meal.MealEditorRoute
@@ -25,6 +26,7 @@ import com.defat.app.ui.onboarding.SummaryRoute
 import com.defat.app.ui.onboarding.WelcomeRoute
 import com.defat.app.ui.profile.ProfileRoute
 import com.defat.app.ui.progress.ProgressRoute
+import com.defat.app.ui.sources.DataSourcesScreen
 import com.defat.app.ui.weight.LogWeightRoute
 
 @Composable
@@ -123,9 +125,19 @@ fun DefatNavHost(
         composable(Routes.PROFILE) {
             ProfileRoute(
                 onLogWeight = { navController.navigate(Routes.WEIGHT_LOG) },
+                onOpenFoodLibrary = { navController.navigate(Routes.FOOD_LIBRARY) },
+                onOpenSources = { navController.navigate(Routes.SOURCES) },
                 onAddMeal = addMeal,
                 onTabSelected = navigateToTab,
             )
+        }
+        // The owner's 食物庫 editor. Visible to every user until the trainer role
+        // exists (Phase 5); the role check will be one guard on this entry.
+        composable(Routes.FOOD_LIBRARY) {
+            FoodLibraryEditorRoute(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.SOURCES) {
+            DataSourcesScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.MEAL_ADD) {
             MealEditorRoute(mealId = null, onDone = { navController.popBackStack() })

@@ -1,0 +1,18 @@
+id,nameZh,nameEn,groupId,appliesTo,kcalDelta,proteinDelta,carbsDelta,fatDelta,source
+rice_less,少飯,Less rice,rice_amount,"ROAST_RICE,western_fried_rice,baked_pork_chop_rice,curry_beef_brisket_rice",-130,,,,COMPOSITION_TABLE
+rice_more,加飯,Extra rice,rice_amount,"ROAST_RICE,western_fried_rice,baked_pork_chop_rice,curry_beef_brisket_rice",130,,,,COMPOSITION_TABLE
+meat_lean,瘦,Lean meat,meat_cut,cha_siu_rice,-120,,,,COMPOSITION_TABLE
+skin_off,去皮,No skin,skin,"soy_sauce_chicken_rice,roast_goose_rice",-90,,,,MEDIA
+sauce_none,走汁,No sauce,sauce,"ROAST_RICE,NOODLE",-100,,,,COMPOSITION_TABLE
+sauce_less,少汁,Less sauce,sauce,"ROAST_RICE,NOODLE",-50,,,,COMPOSITION_TABLE
+sugar_none,走糖,No sugar,sweetness,milk_tea,-48,,,,COMPOSITION_TABLE
+sugar_half,半糖,Half sugar,sweetness,milk_tea,-24,,,,COMPOSITION_TABLE
+milk_none,走奶,No milk,milk,milk_tea,-80,,,,COMPOSITION_TABLE
+milk_less,少奶,Less milk,milk,milk_tea,-40,,,,COMPOSITION_TABLE
+butter_none,走牛油,No butter,butter,"french_toast,buttered_toast",-100,,,,COMPOSITION_TABLE
+peanut_butter_add,加花生醬,Add peanut butter,peanut_butter,buttered_toast,95,,,,COMPOSITION_TABLE
+peanut_butter_none,走花生醬,No peanut butter,peanut_butter,french_toast,-95,,,,COMPOSITION_TABLE
+syrup_add,加糖漿,Add syrup,syrup,"french_toast,buttered_toast",120,,,,COMPOSITION_TABLE
+add_egg,加蛋,Add an egg,add_egg,"NOODLE,TEA_RESTAURANT",72,,,,COMPOSITION_TABLE
+add_luncheon_meat,加午餐肉,Add luncheon meat,add_luncheon_meat,"NOODLE,TEA_RESTAURANT",144,,,,COMPOSITION_TABLE
+add_veg,加菜,Add vegetables,add_veg,"NOODLE,TEA_RESTAURANT",15,,,,MEDIA

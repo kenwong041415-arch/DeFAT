@@ -78,4 +78,19 @@ class DayRollupCalculatorTest {
         val rollup = DayRollupCalculator.rollup(date, target, meals)
         assertEquals(1f, rollup.progressFraction)
     }
+
+    @Test
+    fun `exercise kcal is summed and reported, and no exercise is zero`() {
+        val none = DayRollupCalculator.rollup(date, target, emptyList())
+        assertEquals(0.0, none.exerciseKcal, 0.0)
+
+        val exercise = listOf(
+            com.defat.core.domain.model.ExerciseEntry("a", Instant.parse("2026-03-15T10:00:00Z"), "walking", 3.5, 60, 70.0, 245.0),
+            com.defat.core.domain.model.ExerciseEntry("b", Instant.parse("2026-03-15T11:00:00Z"), "yoga", 2.5, 30, 70.0, 87.5),
+        )
+        val rollup = DayRollupCalculator.rollup(date, target, emptyList(), exercise)
+        assertEquals(332.5, rollup.exerciseKcal, 1e-9)
+        // The rollup reports the TDEE it was handed; it does not recompute it.
+        assertEquals(2582.3, rollup.tdeeKcal, 1e-9)
+    }
 }

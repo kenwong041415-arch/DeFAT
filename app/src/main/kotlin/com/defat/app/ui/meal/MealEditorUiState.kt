@@ -24,6 +24,20 @@ data class MealEditorUiState(
     val kcalTouched: Boolean = false,
     val frequentFoods: List<FrequentFood> = emptyList(),
 
+    /**
+     * The 食物庫 row this meal was picked from, and the 點食法 choices
+     * (plan §8.7). Kept so the meal can be re-opened and re-adjusted; the numbers
+     * above are the meal's own and are not recomputed from these.
+     */
+    val baseFoodId: String? = null,
+    val modifierIds: List<String> = emptyList(),
+    /**
+     * True when the macros came from a library row that does not publish all of
+     * them. The calories-versus-macros warning is meaningless then (an unknown
+     * macro is not a zero), so it is suppressed until the student edits a macro.
+     */
+    val macrosIncomplete: Boolean = false,
+
     val showMacroMismatchWarning: Boolean = false,
     val showDeleteConfirm: Boolean = false,
 ) {
