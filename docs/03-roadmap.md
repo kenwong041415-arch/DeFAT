@@ -37,6 +37,27 @@ What actually shipped:
 - **Exit test**: owner creates own profile, sees a sensible daily target,
   logs a manual meal.
 
+## Phase 1.5 — Sign-in, cloud sync, security rules
+
+Planned in [`docs/plans/phase1.5-implementation-plan.md`](plans/phase1.5-implementation-plan.md).
+Deferred here from Phase 1 (its D1 and D3) because no Firebase project
+existed. The project now does: `asia-east2` (Hong Kong), package
+`com.defat.app`, Analytics off.
+
+- Email + password auth; Google Sign-In deliberately deferred (no SHA-1
+  registered, and it adds console setup for no gain yet).
+- Offline-first sync: Room stays the write path, Firestore mirrors it, so a
+  sync failure can never block logging.
+- **Security rules are the only protection in this phase** — the repository
+  is public and the test APK is published login-free, so the Firebase API key
+  is public by design. Rules are deny-by-default and five of the seven
+  required rules tests are negative. App Check is recorded as an accepted gap
+  to close before any student other than the owner uses the app.
+- Export my data and delete my account (`docs/06` principle 3).
+- **Exit test**: the owner signs up, finds every meal they had already logged
+  still there, sees the same data on a second device, logs offline and
+  watches it sync, and can export and delete their account from the app.
+
 ## Phase 1.6 — UI revision + meal types
 
 Implemented per [`docs/plans/phase1.6-ui-revision-plan.md`](plans/phase1.6-ui-revision-plan.md)
