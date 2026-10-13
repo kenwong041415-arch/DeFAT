@@ -27,8 +27,18 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      # `packages` must stay set. The action's v3 default is
+      # "tools platform-tools", and Google has removed the long-deprecated
+      # `tools` package from the SDK repository, so sdkmanager exits 1 on a
+      # package it can no longer resolve and the whole job dies before Gradle
+      # runs. This broke every build between 2026-08-12 (last green) and
+      # 2026-10-12 with no change on our side. Do not delete this input as
+      # redundant; `platform-tools` is the only part we actually need, and
+      # Gradle fetches the platform and build-tools itself.
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
