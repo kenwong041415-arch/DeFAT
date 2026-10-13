@@ -2,9 +2,11 @@ package com.defat.core.data.di
 
 import com.defat.core.data.repository.MealRepositoryImpl
 import com.defat.core.data.repository.ProfileRepositoryImpl
+import com.defat.core.data.repository.SettingsRepositoryImpl
 import com.defat.core.data.repository.WeightRepositoryImpl
 import com.defat.core.domain.repository.MealRepository
 import com.defat.core.domain.repository.ProfileRepository
+import com.defat.core.domain.repository.SettingsRepository
 import com.defat.core.domain.repository.WeightRepository
 import dagger.Binds
 import dagger.Module
@@ -29,6 +31,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindMealRepository(impl: MealRepositoryImpl): MealRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSettingsRepository(impl: SettingsRepositoryImpl): SettingsRepository
 
     @Binds
     @Singleton

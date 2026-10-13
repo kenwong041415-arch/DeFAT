@@ -2,6 +2,9 @@ package com.defat.app.ui
 
 import com.defat.app.fake.FakeMealRepository
 import com.defat.app.fake.FakeProfileRepository
+import com.defat.app.fake.FakeSettingsRepository
+import com.defat.app.fake.TestClock
+import com.defat.app.ui.SelectedDayHolder
 import com.defat.app.ui.home.HomeUiState
 import com.defat.app.ui.home.HomeViewModel
 import com.defat.core.domain.calc.roundGrams
@@ -15,8 +18,12 @@ import com.defat.core.domain.model.Sex
 import com.defat.core.domain.model.UserProfile
 import com.defat.core.domain.usecase.ObserveTodayDashboardUseCase
 import java.time.Instant
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -47,7 +54,7 @@ class HomeViewModelTest {
 
     private fun goldenProfile() = UserProfile(
         sex = Sex.MALE,
-        birthDate = LocalDate.now().minusYears(30),
+        birthDate = TestClock.today.minusYears(30),
         heightCm = 175.0,
         weightKg = 80.0,
         bodyFatPct = 25.0,
@@ -64,8 +71,8 @@ class HomeViewModelTest {
         mealType: MealType = MealType.SNACK,
     ) = Meal(
         id = "$kcal-$protein-$mealType",
-        loggedAt = Instant.now(),
-        date = LocalDate.now(),
+        loggedAt = TestClock.clock.instant(),
+        date = TestClock.today,
         name = "meal",
         kcal = kcal,
         proteinG = protein,
@@ -78,14 +85,31 @@ class HomeViewModelTest {
     private fun newViewModel(
         profileRepository: FakeProfileRepository,
         mealRepository: FakeMealRepository,
+        settingsRepository: FakeSettingsRepository = FakeSettingsRepository(),
+        selectedDay: SelectedDayHolder = SelectedDayHolder(),
     ): HomeViewModel {
         val observeTodayDashboard = ObserveTodayDashboardUseCase(
             profileRepository,
             mealRepository,
+            settingsRepository,
             com.defat.core.domain.usecase.ComputeDailyTargetUseCase(),
+            TestClock.clock,
         )
-        return HomeViewModel(observeTodayDashboard, mealRepository)
+        return HomeViewModel(observeTodayDashboard, mealRepository, settingsRepository, selectedDay, TestClock.clock)
     }
+
+    /** A meal at [hour]:[minute] local time on calendar [date], in the test zone. */
+    private fun mealAt(date: LocalDate, hour: Int, minute: Int, kcal: Double) = Meal(
+        id = "$date-$hour:$minute-$kcal",
+        loggedAt = LocalDateTime.of(date, LocalTime.of(hour, minute)).atZone(TestClock.zone).toInstant(),
+        date = date,
+        name = "meal",
+        kcal = kcal,
+        proteinG = 10.0,
+        carbsG = 10.0,
+        fatG = 10.0,
+        source = MealSource.MANUAL,
+    )
 
     @Test
     fun `emits intake, remaining and protein for two fake meals`() = runTest(testDispatcher) {
@@ -151,5 +175,117 @@ class HomeViewModelTest {
         runCurrent()
 
         assertEquals(HomeUiState.NeedsOnboarding, viewModel.uiState.value)
+    }
+
+    @Test
+    fun `the week strip has seven cells, Monday first, and today's week`() = runTest(testDispatcher) {
+        val viewModel = newViewModel(FakeProfileRepository(goldenProfile()), FakeMealRepository())
+
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+
+        val state = viewModel.uiState.value as HomeUiState.Content
+        assertEquals(7, state.weekDays.size)
+        assertEquals(DayOfWeek.MONDAY, state.weekDays.first().date.dayOfWeek)
+        assertEquals(LocalDate.of(2026, 10, 12), state.weekDays.first().date)
+        assertEquals(LocalDate.of(2026, 10, 13), state.selectedDate)
+        assertTrue(state.weekDays.single { it.isToday }.isSelected)
+    }
+
+    @Test
+    fun `days after today are disabled in the strip`() = runTest(testDispatcher) {
+        val viewModel = newViewModel(FakeProfileRepository(goldenProfile()), FakeMealRepository())
+
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+
+        val state = viewModel.uiState.value as HomeUiState.Content
+        // Tue 13 is today; Wed 14 .. Sun 18 are future.
+        assertEquals(
+            listOf(false, false, true, true, true, true, true),
+            state.weekDays.map { it.isFuture },
+        )
+
+        viewModel.selectDay(LocalDate.of(2026, 10, 15))
+        runCurrent()
+        assertEquals(LocalDate.of(2026, 10, 13), (viewModel.uiState.value as HomeUiState.Content).selectedDate)
+    }
+
+    @Test
+    fun `selecting a day re-queries and Home follows it, not today`() = runTest(testDispatcher) {
+        val yesterday = TestClock.today.minusDays(1)
+        val mealRepository = FakeMealRepository(
+            listOf(
+                mealAt(TestClock.today, 12, 0, kcal = 700.0),
+                mealAt(yesterday, 12, 0, kcal = 400.0),
+            ),
+        )
+        val viewModel = newViewModel(FakeProfileRepository(goldenProfile()), mealRepository)
+
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+        assertEquals(700, (viewModel.uiState.value as HomeUiState.Content).dayRollup.intakeKcal.roundKcal())
+
+        viewModel.selectDay(yesterday)
+        runCurrent()
+
+        val state = viewModel.uiState.value as HomeUiState.Content
+        assertEquals(yesterday, state.selectedDate)
+        assertEquals(yesterday, state.dayRollup.date)
+        assertEquals(400, state.dayRollup.intakeKcal.roundKcal())
+        assertFalse(state.isToday)
+        assertTrue(state.weekDays.single { it.date == yesterday }.isSelected)
+    }
+
+    @Test
+    fun `a day with a logged meal gets a dot`() = runTest(testDispatcher) {
+        val yesterday = TestClock.today.minusDays(1)
+        val mealRepository = FakeMealRepository(listOf(mealAt(yesterday, 12, 0, kcal = 400.0)))
+        val viewModel = newViewModel(FakeProfileRepository(goldenProfile()), mealRepository)
+
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+
+        val state = viewModel.uiState.value as HomeUiState.Content
+        assertTrue(state.weekDays.single { it.date == yesterday }.hasEntries)
+        assertFalse(state.weekDays.single { it.isToday }.hasEntries)
+    }
+
+    @Test
+    fun `a 01-30 snack counts toward the previous day on Home`() = runTest(testDispatcher) {
+        // Calendar 2026-10-13 01:30 is logical 2026-10-12 with the default 04:00 start.
+        val mealRepository = FakeMealRepository(listOf(mealAt(TestClock.today, 1, 30, kcal = 300.0)))
+        val viewModel = newViewModel(FakeProfileRepository(goldenProfile()), mealRepository)
+
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+        assertEquals(0, (viewModel.uiState.value as HomeUiState.Content).dayRollup.intakeKcal.roundKcal())
+
+        viewModel.selectDay(TestClock.today.minusDays(1))
+        runCurrent()
+        assertEquals(300, (viewModel.uiState.value as HomeUiState.Content).dayRollup.intakeKcal.roundKcal())
+    }
+
+    @Test
+    fun `swiping weeks moves a week and stops at the earliest logged day`() = runTest(testDispatcher) {
+        val earliest = LocalDate.of(2026, 10, 8) // Thursday of the previous week
+        val mealRepository = FakeMealRepository(listOf(mealAt(earliest, 12, 0, kcal = 400.0)))
+        val viewModel = newViewModel(FakeProfileRepository(goldenProfile()), mealRepository)
+
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+
+        viewModel.previousWeek()
+        runCurrent()
+        // Tue 13 minus a week is Tue 6, before the earliest logged day -> clamped to it.
+        assertEquals(earliest, (viewModel.uiState.value as HomeUiState.Content).selectedDate)
+
+        viewModel.previousWeek()
+        runCurrent()
+        assertEquals(earliest, (viewModel.uiState.value as HomeUiState.Content).selectedDate)
+
+        viewModel.nextWeek()
+        runCurrent()
+        assertEquals(TestClock.today, (viewModel.uiState.value as HomeUiState.Content).selectedDate)
     }
 }

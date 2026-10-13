@@ -9,7 +9,7 @@ data class UserProfile(
     val birthDate: LocalDate,
     val heightCm: Double,
     val weightKg: Double,
-    val bodyFatPct: Double?, // null = unknown -> Mifflin path
+    val bodyFatPct: Double?, // null = unknown -> Henry path
     val activityLevel: ActivityLevel,
     val goal: Goal,
     val disclaimerAcceptedAt: Instant?,

@@ -3,6 +3,8 @@ package com.defat.app.ui.meal
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.defat.app.ui.SelectedDayHolder
+import com.defat.core.domain.calc.DayBoundary
 import com.defat.core.domain.calc.MealTypeInference
 import com.defat.core.domain.calc.FrequentFoodRanker
 import com.defat.core.domain.calc.NutritionConstants
@@ -12,11 +14,12 @@ import com.defat.core.domain.model.FrequentFood
 import com.defat.core.domain.model.Meal
 import com.defat.core.domain.model.MealType
 import com.defat.core.domain.repository.MealRepository
+import com.defat.core.domain.repository.SettingsRepository
 import com.defat.core.domain.usecase.SaveMealUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.math.abs
@@ -25,6 +28,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -40,19 +44,29 @@ class MealEditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val mealRepository: MealRepository,
     private val saveMealUseCase: SaveMealUseCase,
+    private val settingsRepository: SettingsRepository,
+    private val selectedDay: SelectedDayHolder,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val mealId: String? = savedStateHandle.get<String>("mealId")
 
-    private val now: LocalTime = LocalTime.now()
+    private val now: LocalTime = clock.instant().atZone(clock.zone).toLocalTime()
+
+    /**
+     * The date shown in the editor is the *logical* date (plan §7): with a 04:00
+     * day start, 01:30 on the 13th is "the 12th". Replaced with the real
+     * setting as soon as it has loaded, before the form is shown (isLoading).
+     */
+    private var dayStart: LocalTime = DayBoundary.DEFAULT_DAY_START
 
     private val _uiState = MutableStateFlow(
         MealEditorUiState(
             mealId = mealId,
             isEditMode = mealId != null,
             time = now,
-            date = LocalDate.now(),
-            mealType = MealTypeInference.forTime(now),
+            date = DayBoundary.logicalDate(clock.instant(), clock.zone, dayStart),
+            mealType = MealTypeInference.forTime(now, dayStart),
         ),
     )
     val uiState: StateFlow<MealEditorUiState> = _uiState.asStateFlow()
@@ -61,31 +75,43 @@ class MealEditorViewModel @Inject constructor(
     val eventFlow: Flow<MealEditorEvent> = events.receiveAsFlow()
 
     init {
-        val id = mealId
-        if (id != null) {
-            viewModelScope.launch {
-                val meal = mealRepository.mealById(id)
-                _uiState.update { state ->
-                    if (meal == null) {
-                        state.copy(isLoading = false)
-                    } else {
-                        state.copy(
-                            nameText = meal.name,
-                            kcalText = meal.kcal.toString(),
-                            proteinText = meal.proteinG.toString(),
-                            carbsText = meal.carbsG.toString(),
-                            fatText = meal.fatG.toString(),
-                            time = meal.loggedAt.atZone(ZoneId.systemDefault()).toLocalTime(),
-                            date = meal.date,
-                            mealType = meal.mealType,
-                            mealTypeManuallySet = true,
-                            isLoading = false,
-                        )
-                    }
+        viewModelScope.launch {
+            dayStart = settingsRepository.dayStart.first()
+            val id = mealId
+            val meal = if (id != null) mealRepository.mealById(id) else null
+            _uiState.update { state ->
+                if (id == null) {
+                    // New meal: the selected day on Home (or today), at the current time.
+                    // Re-infer the meal type: the initial state was built with the
+                    // default day start, and the loaded setting may move the
+                    // small-hours cut-off (MealTypeInference.forTime(time, dayStart)).
+                    val today = DayBoundary.logicalDate(clock.instant(), clock.zone, dayStart)
+                    state.copy(
+                        date = minOf(selectedDay.selected.value ?: today, today),
+                        mealType = if (state.mealTypeManuallySet) {
+                            state.mealType
+                        } else {
+                            MealTypeInference.forTime(state.time, dayStart)
+                        },
+                        isLoading = false,
+                    )
+                } else if (meal == null) {
+                    state.copy(isLoading = false)
+                } else {
+                    state.copy(
+                        nameText = meal.name,
+                        kcalText = meal.kcal.toString(),
+                        proteinText = meal.proteinG.toString(),
+                        carbsText = meal.carbsG.toString(),
+                        fatText = meal.fatG.toString(),
+                        time = meal.loggedAt.atZone(clock.zone).toLocalTime(),
+                        date = DayBoundary.logicalDate(meal.loggedAt, clock.zone, dayStart),
+                        mealType = meal.mealType,
+                        mealTypeManuallySet = true,
+                        isLoading = false,
+                    )
                 }
             }
-        } else {
-            _uiState.update { it.copy(isLoading = false) }
         }
 
         viewModelScope.launch {
@@ -105,7 +131,11 @@ class MealEditorViewModel @Inject constructor(
     fun setTime(time: LocalTime) = update { state ->
         state.copy(
             time = time,
-            mealType = if (state.mealTypeManuallySet) state.mealType else MealTypeInference.forTime(time),
+            mealType = if (state.mealTypeManuallySet) {
+                state.mealType
+            } else {
+                MealTypeInference.forTime(time, dayStart)
+            },
         )
     }
 
@@ -138,7 +168,9 @@ class MealEditorViewModel @Inject constructor(
         if (!state.isSaveEnabled) return
         val meal = Meal(
             id = state.mealId ?: UUID.randomUUID().toString(),
-            loggedAt = state.date.atTime(state.time).atZone(ZoneId.systemDefault()).toInstant(),
+            // state.date is the logical date; a time before the day start falls
+            // on the next calendar morning (DayBoundary.instantAt).
+            loggedAt = DayBoundary.instantAt(state.date, state.time, clock.zone, dayStart),
             date = state.date,
             name = state.nameText.trim(),
             kcal = state.kcal ?: 0.0,

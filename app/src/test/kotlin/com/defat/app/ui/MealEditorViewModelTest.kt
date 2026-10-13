@@ -2,6 +2,9 @@ package com.defat.app.ui
 
 import androidx.lifecycle.SavedStateHandle
 import com.defat.app.fake.FakeMealRepository
+import com.defat.app.fake.FakeSettingsRepository
+import com.defat.app.fake.TestClock
+import com.defat.app.ui.SelectedDayHolder
 import com.defat.app.ui.meal.MealEditorViewModel
 import com.defat.core.domain.model.FrequentFood
 import com.defat.core.domain.model.Meal
@@ -42,9 +45,18 @@ class MealEditorViewModelTest {
     private fun newViewModel(
         mealRepository: FakeMealRepository,
         mealId: String? = null,
+        selectedDay: SelectedDayHolder = SelectedDayHolder(),
+        settingsRepository: FakeSettingsRepository = FakeSettingsRepository(),
     ): MealEditorViewModel {
         val handle = if (mealId != null) SavedStateHandle(mapOf("mealId" to mealId)) else SavedStateHandle()
-        return MealEditorViewModel(handle, mealRepository, SaveMealUseCase(mealRepository))
+        return MealEditorViewModel(
+            handle,
+            mealRepository,
+            SaveMealUseCase(mealRepository),
+            settingsRepository,
+            selectedDay,
+            TestClock.clock,
+        )
     }
 
     @Test
@@ -172,5 +184,68 @@ class MealEditorViewModelTest {
         assertEquals("520", state.kcalText)
         assertEquals("48", state.proteinText)
         assertEquals(MealType.BREAKFAST, state.mealType)
+    }
+
+    @Test
+    fun `a new meal opens on today's logical date at the current time`() {
+        val vm = newViewModel(FakeMealRepository())
+
+        assertFalse(vm.uiState.value.isLoading)
+        assertEquals(TestClock.today, vm.uiState.value.date)
+        assertEquals(LocalTime.of(14, 0), vm.uiState.value.time)
+    }
+
+    @Test
+    fun `a new meal opens on the day selected on Home`() {
+        val selectedDay = SelectedDayHolder()
+        val earlier = TestClock.today.minusDays(3)
+        selectedDay.select(earlier)
+
+        val vm = newViewModel(FakeMealRepository(), selectedDay = selectedDay)
+
+        assertEquals(earlier, vm.uiState.value.date)
+    }
+
+    @Test
+    fun `a small-hours time is stored on the next calendar morning but stays on the logical day`() = runTest {
+        val mealRepository = FakeMealRepository()
+        val vm = newViewModel(mealRepository)
+        vm.setName("宵夜")
+        vm.setKcal("300")
+        vm.setDate(LocalDate.of(2026, 10, 12))
+        vm.setTime(LocalTime.of(1, 30))
+        vm.save()
+
+        val saved = mealRepository.lastUpserted!!
+        assertEquals(LocalDate.of(2026, 10, 12), saved.date)
+        val local = saved.loggedAt.atZone(TestClock.zone)
+        assertEquals(LocalDate.of(2026, 10, 13), local.toLocalDate())
+        assertEquals(LocalTime.of(1, 30), local.toLocalTime())
+    }
+
+    @Test
+    fun `editing a late meal shows the logical date it counts toward`() = runTest {
+        val late = Meal(
+            id = "late-1",
+            // Calendar 2026-10-13 01:30 in Hong Kong -> logical day 2026-10-12.
+            loggedAt = Instant.parse("2026-10-12T17:30:00Z"),
+            date = LocalDate.of(2026, 10, 13), // pre-1.7 row: calendar date, not logical
+            name = "Noodles",
+            kcal = 400.0,
+            proteinG = 10.0,
+            carbsG = 50.0,
+            fatG = 10.0,
+            source = MealSource.MANUAL,
+            mealType = MealType.SNACK,
+        )
+        val mealRepository = FakeMealRepository(listOf(late))
+        val vm = newViewModel(mealRepository, mealId = "late-1")
+
+        assertEquals(LocalDate.of(2026, 10, 12), vm.uiState.value.date)
+        assertEquals(LocalTime.of(1, 30), vm.uiState.value.time)
+
+        // Saving without touching the date or time must not move the meal.
+        vm.save()
+        assertEquals(late.loggedAt, mealRepository.lastUpserted?.loggedAt)
     }
 }

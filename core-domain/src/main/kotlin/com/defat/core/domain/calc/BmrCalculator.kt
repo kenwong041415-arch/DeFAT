@@ -49,8 +49,59 @@ object BmrCalculator {
     }
 
     /**
+     * Henry (2005) "Oxford" equations — docs/04. Banded by sex and age;
+     * bands are half-open on the lower bound (age 30 -> the 30..59 band,
+     * age 60 -> the 60+ band).
+     *
+     * The bands are discontinuous by design: BMR steps down at each boundary
+     * (see docs/04). We implement the published equation exactly and do not
+     * interpolate; smoothing would be our invention, not Henry's.
+     *
+     * @throws IllegalArgumentException if [ageYears] < HENRY_MIN_ADULT_AGE —
+     *   DeFAT is an adults-only app and the wizard rejects minors.
+     */
+    fun henryOxford(weightKg: Double, heightCm: Double, ageYears: Int, sex: Sex): Double {
+        require(weightKg > 0) { "weightKg must be > 0, was $weightKg" }
+        require(heightCm > 0) { "heightCm must be > 0, was $heightCm" }
+        require(ageYears >= NutritionConstants.HENRY_MIN_ADULT_AGE) {
+            "ageYears must be >= 18 (adults only), was $ageYears"
+        }
+        return when (sex) {
+            Sex.MALE -> when {
+                ageYears < NutritionConstants.HENRY_BAND_2_FROM_AGE ->
+                    NutritionConstants.HENRY_M_18_30_W * weightKg +
+                        NutritionConstants.HENRY_M_18_30_H * heightCm +
+                        NutritionConstants.HENRY_M_18_30_C
+                ageYears < NutritionConstants.HENRY_BAND_3_FROM_AGE ->
+                    NutritionConstants.HENRY_M_30_60_W * weightKg +
+                        NutritionConstants.HENRY_M_30_60_H * heightCm +
+                        NutritionConstants.HENRY_M_30_60_C
+                else ->
+                    NutritionConstants.HENRY_M_60_PLUS_W * weightKg +
+                        NutritionConstants.HENRY_M_60_PLUS_H * heightCm +
+                        NutritionConstants.HENRY_M_60_PLUS_C
+            }
+            Sex.FEMALE -> when {
+                ageYears < NutritionConstants.HENRY_BAND_2_FROM_AGE ->
+                    NutritionConstants.HENRY_F_18_30_W * weightKg +
+                        NutritionConstants.HENRY_F_18_30_H * heightCm +
+                        NutritionConstants.HENRY_F_18_30_C
+                ageYears < NutritionConstants.HENRY_BAND_3_FROM_AGE ->
+                    NutritionConstants.HENRY_F_30_60_W * weightKg +
+                        NutritionConstants.HENRY_F_30_60_H * heightCm +
+                        NutritionConstants.HENRY_F_30_60_C
+                else ->
+                    NutritionConstants.HENRY_F_60_PLUS_W * weightKg +
+                        NutritionConstants.HENRY_F_60_PLUS_H * heightCm +
+                        NutritionConstants.HENRY_F_60_PLUS_C
+            }
+        }
+    }
+
+    /**
      * Selects Katch-McArdle when [UserProfile.bodyFatPct] is known, otherwise
-     * falls back to Mifflin-St Jeor (docs/04).
+     * Henry (2005) "Oxford" (docs/04). Mifflin-St Jeor stays implemented as the
+     * alternative but is not selected here.
      */
     fun bmr(profile: UserProfile, on: LocalDate): BmrResult {
         val fatPct = profile.bodyFatPct
@@ -59,8 +110,8 @@ object BmrCalculator {
         } else {
             val age = profile.ageYears(on)
             BmrResult(
-                mifflinStJeor(profile.weightKg, profile.heightCm, age, profile.sex),
-                BmrMethod.MIFFLIN_ST_JEOR,
+                henryOxford(profile.weightKg, profile.heightCm, age, profile.sex),
+                BmrMethod.HENRY_OXFORD,
             )
         }
     }

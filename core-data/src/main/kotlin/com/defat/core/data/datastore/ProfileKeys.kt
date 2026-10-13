@@ -2,6 +2,7 @@ package com.defat.core.data.datastore
 
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 
@@ -18,4 +19,11 @@ object ProfileKeys {
     val GOAL_TARGET_DATE = stringPreferencesKey("goal_target_date") // optional ISO date
     val DISCLAIMER_ACCEPTED_AT = longPreferencesKey("disclaimer_accepted_at") // epoch millis
     val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
+
+    /**
+     * Phase 1.7 (plan §7.4): minutes from midnight at which a new logical day
+     * starts. Absent = the default, 04:00 (240). Not part of the health
+     * profile, but it lives in the same file so there is one DataStore.
+     */
+    val DAY_START_MINUTES = intPreferencesKey("day_start_minutes")
 }

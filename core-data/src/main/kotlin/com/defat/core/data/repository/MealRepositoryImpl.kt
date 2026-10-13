@@ -6,7 +6,7 @@ import com.defat.core.data.mapper.toDomain
 import com.defat.core.data.mapper.toEntity
 import com.defat.core.domain.model.Meal
 import com.defat.core.domain.repository.MealRepository
-import java.time.LocalDate
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
@@ -21,8 +21,13 @@ class MealRepositoryImpl @Inject constructor(
     @IoDispatcher private val io: CoroutineDispatcher,
 ) : MealRepository {
 
-    override fun mealsOn(date: LocalDate): Flow<List<Meal>> =
-        mealDao.observeByDate(date.toString())
+    override fun mealsBetween(startInclusive: Instant, endExclusive: Instant): Flow<List<Meal>> =
+        mealDao.observeBetween(startInclusive.toEpochMilli(), endExclusive.toEpochMilli())
+            .map { entities -> entities.map { it.toDomain() } }
+            .flowOn(io)
+
+    override fun allMeals(): Flow<List<Meal>> =
+        mealDao.observeAll()
             .map { entities -> entities.map { it.toDomain() } }
             .flowOn(io)
 

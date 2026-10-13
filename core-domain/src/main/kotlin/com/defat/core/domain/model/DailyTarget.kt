@@ -1,7 +1,11 @@
 package com.defat.core.domain.model
 
 /** Which BMR formula produced the result — see docs/04. */
-enum class BmrMethod { KATCH_MCARDLE, MIFFLIN_ST_JEOR }
+enum class BmrMethod {
+    KATCH_MCARDLE,
+    HENRY_OXFORD,
+    MIFFLIN_ST_JEOR,
+}
 
 /** Which TDEE computation mode produced the result — see docs/04. */
 enum class TdeeSource { ACTIVITY_MULTIPLIER, WEARABLE }

@@ -2,7 +2,8 @@ package com.defat.app.fake
 
 import com.defat.core.domain.model.Meal
 import com.defat.core.domain.repository.MealRepository
-import java.time.LocalDate
+import java.time.Instant
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
@@ -17,7 +18,14 @@ class FakeMealRepository(initial: List<Meal> = emptyList()) : MealRepository {
     var deleteCallCount: Int = 0
         private set
 
-    override fun mealsOn(date: LocalDate) = meals.map { list -> list.filter { it.date == date } }
+    // Window query on the instant, exactly like the real DAO — never on Meal.date.
+    override fun mealsBetween(startInclusive: Instant, endExclusive: Instant): Flow<List<Meal>> =
+        meals.map { list ->
+            list.filter { it.loggedAt >= startInclusive && it.loggedAt < endExclusive }
+                .sortedBy { it.loggedAt }
+        }
+
+    override fun allMeals(): Flow<List<Meal>> = meals.map { list -> list.sortedBy { it.loggedAt } }
 
     override fun recentMeals(limit: Int) =
         meals.map { list -> list.sortedByDescending { it.loggedAt }.take(limit) }

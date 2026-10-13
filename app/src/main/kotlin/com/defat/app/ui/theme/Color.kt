@@ -19,6 +19,18 @@ import androidx.compose.ui.graphics.Color
  * Hexes and contrast ratios are specified exactly in
  * docs/plans/phase1.6-ui-revision-plan.md §7.2/§7.3 — copied verbatim here,
  * not recomputed.
+ *
+ * Phase 1.7 made dark the default scheme (plan §9) and left every value below
+ * unchanged. The contrast argument was re-run for dark-as-default:
+ *   - calorie-ring arc (secondary) on surface 7.7:1, on background 8.5:1
+ *   - macro-tile fill vs its track (outlineVariant) 5.5:1 for jade, 6.3:1 for
+ *     the pine protein tile — better than light mode's 2.2:1, so the meter
+ *     clears 3:1 in dark
+ *   - muted text (onSurfaceVariant) on surface 6.2:1, on background 6.9:1
+ *   - week-strip selected pill: onPrimary on primary 7.5:1
+ * The one sub-4.5:1 pairing is onSurfaceVariant on surfaceContainerHighest
+ * (the filled-Card colour): 4.2:1. Rule, as for light mode: muted text sits on
+ * background or surface, never inside a filled Card.
  */
 
 // Light scheme

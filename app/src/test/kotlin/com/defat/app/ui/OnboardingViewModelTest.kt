@@ -9,6 +9,7 @@ import com.defat.core.domain.usecase.ComputeDailyTargetUseCase
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -94,5 +95,39 @@ class OnboardingViewModelTest {
         viewModel.setBodyFatPctText("25")
         viewModel.setActivityLevel(ActivityLevel.MODERATE)
         viewModel.setGoalTargetWeightText("75")
+    }
+
+    private fun fillBasics(birthDate: LocalDate) {
+        viewModel.setSex(Sex.MALE)
+        viewModel.setBirthDate(birthDate)
+        viewModel.setHeightCmText("175")
+    }
+
+    @Test
+    fun `a birth date under 18 is a validation error and blocks next`() {
+        fillBasics(LocalDate.now().minusYears(18).plusDays(1)) // turns 18 tomorrow
+
+        assertTrue(viewModel.uiState.value.isUnderMinAge)
+        assertFalse(viewModel.uiState.value.isBasicsValid)
+    }
+
+    @Test
+    fun `turning 18 today is accepted`() {
+        fillBasics(LocalDate.now().minusYears(18))
+
+        assertFalse(viewModel.uiState.value.isUnderMinAge)
+        assertTrue(viewModel.uiState.value.isBasicsValid)
+    }
+
+    @Test
+    fun `a minor gets no daily target`() {
+        // The Henry equations reject minors; the wizard must never reach them.
+        fillBasics(LocalDate.now().minusYears(15))
+        viewModel.setWeightKgText("60")
+        viewModel.setBodyFatUnknown(true)
+        viewModel.setGoalTargetWeightText("55")
+
+        assertFalse(viewModel.uiState.value.isBasicsValid)
+        assertNull(viewModel.uiState.value.dailyTarget)
     }
 }

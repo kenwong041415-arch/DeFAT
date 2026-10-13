@@ -1,27 +1,24 @@
 package com.defat.app.ui.history
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -34,67 +31,51 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.defat.app.R
-import com.defat.app.ui.component.MacroTileData
-import com.defat.app.ui.component.MacroTileRow
-import com.defat.app.ui.component.MealTypeSections
-import com.defat.app.ui.component.SectionCard
+import com.defat.app.ui.component.DefatTab
+import com.defat.app.ui.component.DefatTabScaffold
 import com.defat.app.ui.theme.DefatTheme
-import com.defat.core.domain.calc.MealGrouping
-import com.defat.core.domain.calc.roundGrams
 import com.defat.core.domain.calc.roundKcal
-import com.defat.core.domain.model.BmrMethod
-import com.defat.core.domain.model.DailyTarget
-import com.defat.core.domain.model.DayRollup
-import com.defat.core.domain.model.MacroTargets
-import com.defat.core.domain.model.TdeeSource
+import com.defat.core.domain.model.DaySummary
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
 @Composable
 fun HistoryRoute(
-    onEditMeal: (String) -> Unit,
-    onBack: () -> Unit,
+    onOpenToday: () -> Unit,
+    onAddMeal: () -> Unit,
+    onTabSelected: (DefatTab) -> Unit,
     viewModel: HistoryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     HistoryScreen(
         uiState = uiState,
-        onEditMeal = onEditMeal,
-        onSelectDate = viewModel::selectDate,
-        onPreviousDay = viewModel::previousDay,
-        onNextDay = viewModel::nextDay,
-        onBack = onBack,
+        onOpenDay = { date ->
+            viewModel.openDay(date)
+            onOpenToday()
+        },
+        onAddMeal = onAddMeal,
+        onTabSelected = onTabSelected,
     )
 }
 
 @Composable
 fun HistoryScreen(
     uiState: HistoryUiState,
-    onEditMeal: (String) -> Unit,
-    onSelectDate: (LocalDate) -> Unit,
-    onPreviousDay: () -> Unit,
-    onNextDay: () -> Unit,
-    onBack: () -> Unit,
+    onOpenDay: (LocalDate) -> Unit,
+    onAddMeal: () -> Unit,
+    onTabSelected: (DefatTab) -> Unit,
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.history_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
-                    }
-                },
-            )
-        },
+    DefatTabScaffold(
+        selectedTab = DefatTab.HISTORY,
+        onTabSelected = onTabSelected,
+        onAddMeal = onAddMeal,
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.history_title)) }) },
     ) { padding ->
         when (uiState) {
             is HistoryUiState.Loading, HistoryUiState.NeedsOnboarding -> {
@@ -105,11 +86,8 @@ fun HistoryScreen(
             is HistoryUiState.Content -> {
                 HistoryContent(
                     modifier = Modifier.padding(padding),
-                    uiState = uiState,
-                    onEditMeal = onEditMeal,
-                    onSelectDate = onSelectDate,
-                    onPreviousDay = onPreviousDay,
-                    onNextDay = onNextDay,
+                    days = uiState.days,
+                    onOpenDay = onOpenDay,
                 )
             }
         }
@@ -118,112 +96,54 @@ fun HistoryScreen(
 
 @Composable
 private fun HistoryContent(
-    uiState: HistoryUiState.Content,
-    onEditMeal: (String) -> Unit,
-    onSelectDate: (LocalDate) -> Unit,
-    onPreviousDay: () -> Unit,
-    onNextDay: () -> Unit,
+    days: List<DaySummary>,
+    onOpenDay: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
-    val rollup = uiState.dayRollup
-    val pickDateContentDescription = stringResource(R.string.history_pick_date)
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+    Column(modifier = modifier.fillMaxSize()) {
+        OutlinedButton(
+            onClick = { showDatePicker = true },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
-            IconButton(onClick = onPreviousDay) {
-                Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                    contentDescription = stringResource(R.string.history_prev_day),
-                )
-            }
-            TextButton(
-                onClick = { showDatePicker = true },
-                modifier = Modifier.semantics {
-                    contentDescription = pickDateContentDescription
-                },
-            ) {
-                Text(uiState.date.toString())
-            }
-            IconButton(onClick = onNextDay, enabled = uiState.canGoForward) {
-                Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = stringResource(R.string.history_next_day),
-                )
-            }
+            Text(stringResource(R.string.history_pick_date))
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-        SectionCard(title = stringResource(R.string.history_totals_title)) {
+        if (days.isEmpty()) {
             Text(
-                stringResource(
-                    R.string.home_eaten_of_target,
-                    rollup.intakeKcal.roundKcal(),
-                    rollup.target.targetKcal.roundKcal(),
-                ),
+                text = stringResource(R.string.history_empty),
                 style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            MacroTileRow(
-                protein = MacroTileData(
-                    label = stringResource(R.string.macro_protein),
-                    usedG = rollup.proteinG.roundGrams(),
-                    targetG = rollup.target.macros.proteinG.roundGrams(),
-                    emphasised = true,
-                    contentDescription = stringResource(
-                        R.string.home_protein_progress,
-                        rollup.proteinG.roundGrams(),
-                        rollup.target.macros.proteinG.roundGrams(),
-                    ),
-                ),
-                carbs = MacroTileData(
-                    label = stringResource(R.string.macro_carbs),
-                    usedG = rollup.carbsG.roundGrams(),
-                    targetG = rollup.target.macros.carbsG.roundGrams(),
-                    emphasised = false,
-                    contentDescription = stringResource(
-                        R.string.home_carbs_progress,
-                        rollup.carbsG.roundGrams(),
-                        rollup.target.macros.carbsG.roundGrams(),
-                    ),
-                ),
-                fat = MacroTileData(
-                    label = stringResource(R.string.macro_fat),
-                    usedG = rollup.fatG.roundGrams(),
-                    targetG = rollup.target.macros.fatG.roundGrams(),
-                    emphasised = false,
-                    contentDescription = stringResource(
-                        R.string.home_fat_progress,
-                        rollup.fatG.roundGrams(),
-                        rollup.target.macros.fatG.roundGrams(),
-                    ),
-                ),
-            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                // Bottom clearance for the centre add button.
+                contentPadding = PaddingValues(bottom = 88.dp),
+            ) {
+                items(items = days, key = { it.date.toString() }) { day ->
+                    Column {
+                        DayRow(day = day, onClick = { onOpenDay(day.date) })
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    }
+                }
+            }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        MealTypeSections(groups = uiState.mealGroups, onEditMeal = onEditMeal)
-
-        Spacer(modifier = Modifier.height(16.dp))
     }
 
     if (showDatePicker) {
-        val initialMillis = uiState.date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        val initialMillis = LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        onSelectDate(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
+                        onOpenDay(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
                     }
                     showDatePicker = false
                 }) { Text(stringResource(R.string.common_save)) }
@@ -237,41 +157,61 @@ private fun HistoryContent(
     }
 }
 
-@Preview(name = "Light")
+@Composable
+private fun DayRow(day: DaySummary, onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(day.date.toString(), style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = stringResource(
+                    R.string.home_eaten_of_target,
+                    day.intakeKcal.roundKcal(),
+                    day.targetKcal.roundKcal(),
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.onSurfaceVariant,
+            )
+        }
+        // 達標 / 超標 — a plain label, not a Chip: it is not interactive.
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            color = if (day.isOverTarget) colors.errorContainer else colors.secondaryContainer,
+            contentColor = if (day.isOverTarget) colors.onErrorContainer else colors.onSecondaryContainer,
+        ) {
+            Text(
+                text = stringResource(
+                    if (day.isOverTarget) R.string.history_over_target else R.string.history_on_target,
+                ),
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            )
+        }
+    }
+}
+
+@Preview(name = "Light", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_NO)
 @Preview(name = "Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun HistoryScreenPreview() {
-    val target = DailyTarget(
-        bmrKcal = 1666.0,
-        bmrMethod = BmrMethod.KATCH_MCARDLE,
-        tdeeKcal = 2582.3,
-        tdeeSource = TdeeSource.ACTIVITY_MULTIPLIER,
-        targetKcal = 2065.84,
-        floorApplied = false,
-        macros = MacroTargets(proteinG = 132.0, fatG = 48.0, carbsG = 276.46, carbsClamped = false),
-    )
-    val rollup = DayRollup(
-        date = LocalDate.now().minusDays(1),
-        target = target,
-        intakeKcal = 1050.0,
-        proteinG = 70.0,
-        carbsG = 110.0,
-        fatG = 27.0,
-        mealCount = 2,
-    )
     DefatTheme {
         HistoryScreen(
             uiState = HistoryUiState.Content(
-                date = LocalDate.now().minusDays(1),
-                dayRollup = rollup,
-                mealGroups = MealGrouping.groupByType(emptyList()),
-                canGoForward = true,
+                days = listOf(
+                    DaySummary(LocalDate.of(2026, 10, 12), intakeKcal = 2050.0, targetKcal = 2134.0, mealCount = 4),
+                    DaySummary(LocalDate.of(2026, 10, 11), intakeKcal = 2400.0, targetKcal = 2134.0, mealCount = 5),
+                ),
             ),
-            onEditMeal = {},
-            onSelectDate = {},
-            onPreviousDay = {},
-            onNextDay = {},
-            onBack = {},
+            onOpenDay = {},
+            onAddMeal = {},
+            onTabSelected = {},
         )
     }
 }

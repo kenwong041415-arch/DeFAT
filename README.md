@@ -31,13 +31,24 @@ AI development sessions: read [`CLAUDE.md`](CLAUDE.md) first.
 
 Requires JDK 17 or newer (CI uses 21); all modules target Java 17 bytecode.
 Android Studio (or the Android SDK + `ANDROID_HOME`) is needed to build
-`:app` and `:core-data`; `:core-domain` is pure Kotlin/JVM and builds
-without the SDK:
+`:app` and `:core-data`.
 
 ```
-./gradlew :core-domain:test        # pure-Kotlin nutrition/metabolism math
 ./gradlew :app:assembleDebug       # full app (needs the Android SDK)
+./gradlew :core-domain:test        # math tests, with the SDK available
+
+# math tests WITHOUT the Android SDK or Google's Maven repo:
+./gradlew -c settings-domain.gradle.kts :core-domain:test
 ```
+
+`:core-domain` is pure Kotlin/JVM, but the plain `:core-domain:test` above
+still needs the Android toolchain, because Gradle evaluates `:app`'s and
+`:core-data`'s build scripts during configuration and those need the Android
+Gradle Plugin from Google's Maven repo. On a machine that cannot reach that
+repo, use `settings-domain.gradle.kts`, which includes `:core-domain` alone.
+All of the calorie, macro, BMR and TDEE math lives there, so this is the
+check worth running before any push. CI uses the real `settings.gradle.kts`
+and builds all three modules.
 
 GitHub Actions (`.github/workflows/android-ci.yml`) builds and tests every
 push/PR and uploads a debug APK artifact — no local Android SDK required

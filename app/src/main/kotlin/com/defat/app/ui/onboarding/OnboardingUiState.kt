@@ -1,5 +1,6 @@
 package com.defat.app.ui.onboarding
 
+import com.defat.core.domain.calc.NutritionConstants
 import com.defat.core.domain.model.ActivityLevel
 import com.defat.core.domain.model.DailyTarget
 import com.defat.core.domain.model.Sex
@@ -36,9 +37,17 @@ data class OnboardingUiState(
     val ageYears: Int?
         get() = birthDate?.let { Period.between(it, LocalDate.now()).years }
 
+    /**
+     * DeFAT is adults-only (plan §5.4): Henry's adult equations do not apply to
+     * minors, and the medical-disclaimer posture does not cover coaching a
+     * child. A birth date under 18 is a validation error, not a silent clamp.
+     */
+    val isUnderMinAge: Boolean
+        get() = ageYears?.let { it < NutritionConstants.HENRY_MIN_ADULT_AGE } == true
+
     val isBasicsValid: Boolean
         get() = sex != null &&
-            (ageYears?.let { it in 13..100 } == true) &&
+            (ageYears?.let { it in NutritionConstants.HENRY_MIN_ADULT_AGE..MAX_AGE_YEARS } == true) &&
             (heightCmText.toDoubleOrNull()?.let { it in 100.0..250.0 } == true)
 
     val isBodyValid: Boolean
@@ -58,6 +67,8 @@ data class OnboardingUiState(
     val goalTargetWeightKg: Double? get() = goalTargetWeightText.toDoubleOrNull()
     val goalTargetFatPct: Double? get() = goalTargetFatText.toDoubleOrNull()
 }
+
+private const val MAX_AGE_YEARS = 100
 
 sealed interface OnboardingEvent {
     data object Completed : OnboardingEvent
