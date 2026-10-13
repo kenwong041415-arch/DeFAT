@@ -13,10 +13,40 @@ Predecessors: [`phase1-implementation-plan.md`](phase1-implementation-plan.md)
 **This phase ships as two PRs.** `CLAUDE.md` requires PRs small enough to
 review, and the combined scope below is not. The split is in §2.
 
-- **PR A** — branch `phase1.7a/structure`: navigation, theme, BMR formula,
-  week strip, day-start-time setting.
-- **PR B** — branch `phase1.7b/logging`: food library, exercise logging,
-  water, streak, data-sources page.
+- **PR A** — navigation, theme, BMR formula, week strip, day-start-time
+  setting.
+- **PR B** — food library and modifiers, exercise logging, water, streak,
+  data-sources page.
+
+**Branch reality (deviation from the original §2 wording).** The AI
+development sessions for this project are pinned to a single designated
+branch, `claude/fitness-weight-loss-app-wubj4k`, and may not push elsewhere.
+PR A therefore lands on that branch and rides in the **same pull request as
+these planning docs** (PR #4) rather than getting a `phase1.7a/structure`
+branch of its own. PR B becomes a separate pull request on the same branch
+once PR #4 is merged. The review-size intent is unchanged — PR A's code plus
+docs is still a reviewable unit, and PR B's four tables stay out of it.
+
+### Running the tests before you push
+
+The math tests can be run in a container with no Android SDK and no access
+to Google's Maven repo:
+
+```
+./gradlew -c settings-domain.gradle.kts :core-domain:test
+```
+
+`settings-domain.gradle.kts` includes `:core-domain` alone. The plain
+`:core-domain:test` does **not** work without the Android toolchain, because
+Gradle evaluates `:app`'s build script during configuration — the README
+claimed otherwise and was wrong until this phase. Baseline before any
+Phase 1.7 work: **66 tests, 0 failures.** Maven Central occasionally answers
+`429 Too Many Requests` through the shared proxy; that is transient, so retry
+rather than treating it as a failure.
+
+`:core-data` and `:app` still cannot be compiled locally at all. CI is the
+only validator for those, so every Kotlin change outside `:core-domain` is
+unverified until CI runs. Budget for that: Phase 1 took five red CI rounds.
 
 ---
 
