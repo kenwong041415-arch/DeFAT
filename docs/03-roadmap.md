@@ -94,6 +94,12 @@ Ships as two PRs because the combined scope is too large for one review.
   database was unreachable and the public lists disagree by up to 2×, so
   every row carries its source and confidence and the owner's corrections
   are permanent.
+- **Modifiers (點食法)** — 少飯 / 瘦 / 走汁 / 半糖 / 走牛油 as first-class
+  ± deltas rather than a range. The owner asked whether portion and modifier
+  choices explain the published spread; reconstructing the dishes from
+  composition values says they largely do (`docs/07` §6), so the variation
+  is modelled instead of averaged. The running total shows its own
+  arithmetic — seeing 走汁 −100 is the coaching, not clutter.
 - Manual MET-based exercise logging, with the double-counting rule in
   `docs/04` that stops it inflating the day's target.
 - Water tracking (35 ml/kg heuristic, owner to confirm).

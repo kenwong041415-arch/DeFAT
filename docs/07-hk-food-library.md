@@ -20,8 +20,14 @@ covered 1000+ local foods since 2007 and is what every dietitian cites.
 site. So the numbers below are *not* sourced from CFS directly; they are
 sourced from media and KOL articles that quote it, second-hand.
 
-**b) The KOL / media lists disagree with each other, badly.**
-Not by rounding — by up to 2×. Measured across the sources listed in §5:
+**b) The KOL / media lists disagree with each other, badly — but the
+disagreement is mostly *real variation*, not error.** See §6: the owner
+pointed out that portion and modifier choices (份量 / 少飯 / 半糖 / 走糖)
+could explain the spread, and reconstructing the dishes from composition
+values confirms it. That finding changes the data model, so read §6 before
+treating any range below as uncertainty.
+
+Measured across the sources listed in §5:
 
 | Item | Published values found | Spread |
 |---|---|---|
@@ -34,11 +40,12 @@ Not by rounding — by up to 2×. Measured across the sources listed in §5:
 | 港式奶茶 | 112 / ~250 kcal (全糖凍) | 2.2× |
 | 譚仔清湯湯底 | 207 / 330 kcal | 1.6× |
 
-Causes, in order of size: **portion is never stated** (one 碟頭飯 can be
-450 g or 700 g), per-piece vs per-basket confusion on dim sum, sugar and
-condensed-milk assumptions on drinks, and 走汁/去皮 variants counted
-inconsistently. Several articles also recycle each other's numbers, so
-"three sources agree" often means one original estimate.
+Causes, in order of size — all three quantified in §6: **modifier choices**
+(走汁 / 少飯 / 瘦 / 半糖 / 走牛油), **counting unit** (per 件 vs per 籠), and
+**genuine portion size** (one 碟頭飯 can be 450 g or 700 g). Several articles
+also recycle each other's numbers, so "three sources agree" often means one
+original estimate — but that residual sloppiness is the *smallest* of the
+causes, not the largest.
 
 **c) Protein is almost never published.** These articles are written for
 weight-loss readers, so they print kcal and sometimes fat. DeFAT's whole
@@ -84,6 +91,10 @@ Rules that follow from it:
 
 1. **Every number on screen carries its confidence.** A `LOW` row shows a
    「估算」badge and, where we have one, the range. No silent precision.
+   **Superseded in part by §6.3:** where the range is explained by modifier
+   choices, we ship a base plus modifier deltas instead of a range, and the
+   row's confidence rises. A range survives only for genuinely unexplained
+   spread.
 2. **The owner can edit any seed row**, and their edit wins forever
    (`editedByOwner`) — a later app update never overwrites it. The owner is
    the nutrition authority; the seed is a starting point, not doctrine.
@@ -209,18 +220,131 @@ search summaries, not by opening the pages (see §1a).
 - loseweighthk / kamadelivery / Fit Options — McDonald's HK figures traced to the chain's own nutrition PDF
 - **Not reached:** `cfs.gov.hk` (official Nutrient Information Inquiry), `mcdonalds.com.hk`, `cafedecoral.com`, `fairwood.com.hk` — all blocked by egress policy
 
-## 6. Open items for the owner
+## 6. Modifiers — why the ranges exist, and the model that follows
 
-1. **Review Tier 4C.** These are the rows most likely to be wrong. The
-   owner's own numbers replace them outright (`source = TRAINER`).
-2. **Portion weights.** Nearly every composite dish lacks one. A 碟頭飯
-   number means nothing without "約 500 g". The owner's portion convention
-   is worth more than any published kcal.
-3. **Protein columns.** Mostly empty, and protein is the app's main coaching
-   lever. Filling these is the single highest-value thing the owner can do
-   to this table.
-4. **The 16-item dietitian set** (§4B) — if the owner can open the 星島
+The owner's question: could 份量 / 少飯 / 半糖 / 走糖 account for the spread
+in §1b? Reconstructing each dish from composition values says **yes, for most
+of it** — and that moves the spread from "uncertainty we must average away"
+to "variation we can model exactly".
+
+### 6.1 The reconstruction
+
+Built up from standard composition estimates (white bread 70 kcal/slice, egg
+72, butter 100/tbsp, peanut butter 95/tbsp, syrup 60/tbsp, sugar 16/tsp,
+evaporated milk 80/60 ml, rice 260/bowl, lean 叉燒 200/100 g, 半肥瘦
+320/100 g, sauce 100/2 tbsp, luncheon meat 144/slice, frying oil 88/10 g).
+These are estimates, and the owner should correct them.
+
+| Dish | Reconstructed | Published |
+|---|---|---|
+| 餐蛋麵, 1 slice luncheon meat / 2 slices + oil | **614** / **788** | 600 / 785 |
+| 港式奶茶, hot 走糖 / iced 全糖 | **104** / **253** | 112 / ~250 |
+| 西多士, 走醬走牛油走糖漿 / +PB+butter / full | **300** / **495** / **710** | 388 / 522 / 850 |
+| 叉燒飯, 瘦+少飯+走汁 / 半肥瘦+汁 / 加飯+多汁 | **590** / **939** / **1068** | 652 / 720 / 1000 |
+
+餐蛋麵 and 奶茶 land almost exactly. 西多士 and 叉燒飯 reproduce the ordering
+and the magnitude with the base running low, most likely because pan-frying
+absorbs more fat than the 10 g assumed. The conclusion holds: **西多士 at 388
+vs 850 kcal is not one source being wrong — it is 走花生醬走牛油走糖漿 versus
+the full build. The 460 kcal gap is entirely peanut butter, butter and
+syrup**, all fat and sugar, all low-volume and invisible.
+
+### 6.2 Three distinct causes, three different fixes
+
+| Cause | Dishes | Fix |
+|---|---|---|
+| **Modifiers** — 少飯 / 瘦 / 走汁 / 半糖 / 走牛油 | 西多士, 叉燒飯, 奶茶, 餐蛋麵 | Model as first-class ± deltas (§6.3) |
+| **Counting unit** — per 件 vs per 籠 | 鳳爪, 蝦餃, 燒賣 | Always store per 件; ask quantity |
+| **Portion size** — 大包/小包, 450 g vs 700 g 碟頭飯 | 叉燒包, 碟頭飯 | Separate rows with `portionGrams` |
+
+蒸鳳爪 is the clean counter-example and the reason the three must not be
+conflated: 63 kcal ≈ 2 隻 (2 × 35 + sauce ≈ 78), 240 kcal ≈ 一籠 of 6
+(6 × 35 + sauce ≈ 230). Nothing to do with 走汁 — the sources were counting
+different things.
+
+### 6.3 The model change this forces
+
+§2 originally said a `LOW` row shows its published range and pre-fills the
+midpoint. **That is now wrong** for modifier-driven spreads: it averages away
+a quantity we can compute. Replace it with:
+
+```
+FoodModifier
+  id
+  nameZh, nameEn
+  groupId                 mutually exclusive within a group
+  appliesTo               List<FoodCategory> or an explicit item list
+  kcalDelta, proteinDelta, carbsDelta, fatDelta     signed; may be negative
+  source, confidence      same tiers as FoodItem (§3)
+```
+
+Starting groups and deltas — **all draft, all for the owner to overrule**:
+
+| Group | Options (kcal delta) | Applies to |
+|---|---|---|
+| 飯量 | 少飯 −130 · 正常 0 · 加飯 +130 | ROAST_RICE, TEA_RESTAURANT rice dishes |
+| 肉款 | 瘦 −120 · 半肥瘦 0 | 叉燒 dishes |
+| 皮 | 去皮 −90 · 正常 0 | 油雞, 白切雞, 燒鵝 |
+| 醬汁 | 走汁 −100 · 少汁 −50 · 正常 0 | ROAST_RICE, NOODLE |
+| 甜度 | 走糖 −48 · 半糖 −24 · 正常 0 | DRINK |
+| 奶 | 走奶 −80 · 少奶 −40 · 正常 0 | DRINK |
+| 牛油 | 走牛油 −100 · 正常 0 | 西多士, 多士, 菠蘿油 |
+| 花生醬 | 加花生醬 +95 · 無 0 | 西多士, 多士 |
+| 加配料 | 加蛋 +72 · 加午餐肉 +144 · 加菜 +15 | NOODLE, TEA_RESTAURANT |
+
+Rules that follow:
+
+1. **A seed row's stored numbers are the standard as-served configuration**,
+   not a midpoint and not the lightest version. Deltas are relative to that,
+   so 走汁 is −100 from a row that already includes sauce. Every row must
+   state its baseline in `portionLabel` (e.g. `1 碟（正常飯、半肥瘦、有汁）`).
+2. **`kcalLow`/`kcalHigh` stay only for genuinely unexplained spread.** Where
+   §6.1 accounts for the range, drop the range and ship the base plus
+   modifiers; the row's confidence rises accordingly.
+3. **Dim sum is stored per 件**, with a quantity stepper in the UI. No row
+   may mean "一籠" unless `portionLabel` says so and `portionGrams` backs it.
+4. **Modifier deltas are owner-editable exactly like food rows**, with the
+   same permanence (`editedByOwner`).
+
+### 6.4 Why this is worth building rather than shipping a range
+
+- **The number matches what the student actually ate.** A midpoint is wrong
+  for everyone; 走汁 + 少飯 + 瘦 is right for the student who ordered it.
+- **It teaches.** The student sees `走汁 −100` on screen. Repeating the
+  owner's own coaching is the product, and the competitor app does not do it.
+- **It changes what the owner has to supply, and shrinks it.** Instead of ~50
+  absolute numbers with ambiguous portions, the owner supplies roughly 15
+  modifier deltas — the figures a trainer already knows cold — plus a
+  judgement on the base portions. Composition tables can carry the bases.
+- **It collapses the `LOW` tier.** Variance that is modelled is no longer
+  uncertainty, so fewer rows need an 「估算」 badge at all.
+
+## 7. Open items for the owner
+
+§6 reduced this list. The original ask was ~50 absolute numbers with
+ambiguous portions; the modifier model needs roughly 15 deltas and a
+judgement on base portions instead, and composition tables can carry most of
+the bases.
+
+**Highest value first:**
+
+1. **The modifier deltas in §6.3.** 走汁 saves how many? 少飯? 瘦 vs 半肥瘦?
+   去皮? These are the figures a trainer states every day, and each one
+   corrects a whole category of dishes at once rather than a single row.
+2. **Base portion convention.** What counts as "正常飯" in a 碟頭飯 — 1.5
+   bowls, 1.75, 2? One answer fixes every rice dish in the table. Likewise
+   the standard meat weight.
+3. **Protein columns** (§4A/§4C). Still mostly empty in every public source,
+   and still the app's main coaching lever.
+4. **Dim sum counting convention** — the app will store per 件 and ask for
+   quantity (§6.2 rule 3); confirm that matches how the owner's students
+   actually order.
+5. **Review Tier 4C** for anything the modifier model does not already
+   explain — those rows are still the most likely to be wrong, and the
+   owner's numbers replace them outright (`source = TRAINER`).
+6. **The 16-item dietitian set** (§4B) — if the owner can open the 星島
    article, reading off the remaining 15 rows gives us the best
    single-methodology block in the whole library.
-5. **Dim sum counting convention** — per 粒 or per 籠. Pick one; the app
-   will state it on every row.
+7. **Sanity-check the composition estimates in §6.1** (bread, butter, peanut
+   butter, evaporated milk, rice per bowl, 叉燒 per 100 g). They are the
+   foundation under every reconstructed base.

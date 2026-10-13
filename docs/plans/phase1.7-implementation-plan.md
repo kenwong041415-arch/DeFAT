@@ -399,6 +399,10 @@ exactly as they are.
 
 Read `docs/07-hk-food-library.md` first. Its §2 is binding: we ship sourced,
 confidence-tagged, owner-editable rows, **not** a table of asserted facts.
+**Read §6 as well** — the owner asked whether 份量 / 少飯 / 半糖 / 走糖 explain
+the published spreads, the reconstruction says they largely do, and that
+changed the data model: modifiers are first-class rows with signed deltas,
+not a range with a midpoint.
 
 ### 8.1 Domain model
 
@@ -431,6 +435,52 @@ data class FoodItem(
 )
 ```
 
+`core-domain/model/FoodModifier.kt` (per `docs/07` §6.3):
+
+```kotlin
+data class FoodModifier(
+    val id: String,
+    val nameZh: String,
+    val nameEn: String,
+    val groupId: String,          // options within a group are exclusive
+    val appliesTo: Set<FoodCategory>,
+    val kcalDelta: Double,        // signed
+    val proteinDelta: Double?,
+    val carbsDelta: Double?,
+    val fatDelta: Double?,
+    val source: FoodSource,
+    val confidence: FoodConfidence,
+    val editedByOwner: Boolean,
+)
+```
+
+`core-domain/calc/ModifiedFoodCalculator.kt` — pure, tested. Applies a chosen
+set of modifiers to a base `FoodItem`:
+
+```kotlin
+/**
+ * docs/07 §6.3. A FoodItem's stored numbers are the standard as-served
+ * configuration; deltas are relative to that, so 走汁 is -100 from a row
+ * that already includes sauce.
+ */
+fun apply(base: FoodItem, modifiers: List<FoodModifier>, quantity: Int = 1): MacroTotals
+```
+
+Requirements:
+
+- `require(quantity >= 1)`.
+- **At most one modifier per `groupId`** — two options from the same group is
+  a programming error, not a silent last-wins: `require` it.
+- A modifier whose `appliesTo` does not contain `base.category` is rejected
+  by `require`, so a 走糖 cannot be attached to 叉燒飯.
+- Macro deltas are **nullable and independent**: a null `proteinDelta` on an
+  applied modifier makes the result's protein null, not unchanged. Pretending
+  protein is unaffected when the source never published it is the same
+  false-precision this whole doc exists to avoid.
+- **Clamp the result at zero**, never negative. 走汁 on an already light row
+  must not produce −20 kcal.
+- Quantity multiplies *after* modifiers: `(base + deltas) × quantity`.
+
 `core-domain/calc/FoodConfidenceRules.kt` — pure, tested:
 
 ```kotlin
@@ -447,7 +497,10 @@ Rules, in order:
 
 ### 8.2 Room (v2 → v3)
 
-New table `food_items`, columns mirroring the model. `id` is the primary key
+New tables `food_items` and `food_modifiers`, columns mirroring the models.
+`food_modifiers.appliesTo` is stored as a comma-separated category list —
+a join table for nine rows of static data is not worth its migration.
+`id` is the primary key
 and for seed rows it is a stable slug (`"cha_siu_rice_lean"`), never an
 autoincrement — a stable id is what lets a later app version update a seed
 row the owner has *not* edited while leaving their edits alone.
@@ -462,15 +515,31 @@ Migration `MIGRATION_2_3`, same discipline as P1.6 §6.3:
 - Entity `@ColumnInfo(defaultValue = …)` must match the SQL `DEFAULT`
   exactly (P1.6 R4) — this is the trap that bit us on `mealType`.
 
-Seeding: generate the `INSERT` statements from a checked-in
-`core-data/src/main/resources/food_seed.csv`, by a small Gradle task, so the
-owner can edit a CSV rather than Kotlin. Columns exactly:
-`id,nameZh,nameEn,portionLabel,portionGrams,kcal,proteinG,carbsG,fatG,kcalLow,kcalHigh,source,category`.
-Blank cell = SQL `NULL`. Confidence is **not** a CSV column — it is computed
-by `confidenceFor` at seed-generation time so the rule has one home.
+Seeding: generate the `INSERT` statements from two checked-in CSVs under
+`core-data/src/main/resources/`, by a small Gradle task, so the owner can
+edit a spreadsheet rather than Kotlin.
 
-Populate the CSV from `docs/07` §4A/4B/4C verbatim. Do not invent a number
-that is not in that doc, and do not fill a blank protein cell with a guess.
+`food_seed.csv` columns exactly:
+`id,nameZh,nameEn,portionLabel,portionGrams,kcal,proteinG,carbsG,fatG,kcalLow,kcalHigh,source,category`
+
+`food_modifier_seed.csv` columns exactly:
+`id,nameZh,nameEn,groupId,appliesTo,kcalDelta,proteinDelta,carbsDelta,fatDelta,source`
+
+Blank cell = SQL `NULL`. Confidence is **not** a CSV column in either file —
+it is computed by `confidenceFor` at seed-generation time so the rule has one
+home.
+
+Populate `food_seed.csv` from `docs/07` §4A/4B/4C and
+`food_modifier_seed.csv` from §6.3. Do not invent a number that is not in
+that doc, and do not fill a blank protein cell with a guess.
+
+Two consequences of `docs/07` §6 for the seed data, both required:
+
+- Every row that §6.1 reconstructed gets its `portionLabel` rewritten to
+  state the baseline configuration (`1 碟（正常飯、半肥瘦、有汁）`), and its
+  `kcalLow`/`kcalHigh` cleared, because the spread is now modelled.
+- Every `DIM_SUM` row is restated **per 件** with `portionLabel` `1 件`,
+  per §6.2 rule 3. 蒸鳳爪 ships as ~40 kcal per 件, not 63 or 240.
 
 ### 8.3 Re-seeding on later updates
 
@@ -495,10 +564,14 @@ Layout, top to bottom:
 4. Results list. Each row: name, portion label, kcal, and a badge per
    `docs/07` §3 — none for `HIGH`, 「約」 for `COMPOSITION_TABLE`, 「估算」
    for `DIETITIAN`/`MEDIA`, 「教練」 for `TRAINER`, 「自訂」 for `USER`.
-5. A `LOW`-confidence row with a range shows it as `850–970 kcal` on a second
-   line, and tapping the row pre-fills the **midpoint**, rounded to 10 kcal,
-   with the editor field focused so the student can correct it.
-6. Last row, always: 「搵唔到？自己加」 → the manual entry fields.
+5. Tapping a row opens the **modifier step** (§8.6) when the item has any
+   applicable modifier group, otherwise it fills the editor directly.
+6. A `LOW`-confidence row that still carries an unexplained range shows it as
+   `850–970 kcal` on a second line and pre-fills the **midpoint**, rounded to
+   10 kcal, with the editor field focused. Per `docs/07` §6.3 rule 2 this is
+   now the exception, not the norm — a range explained by modifiers must be
+   replaced by base + deltas instead.
+7. Last row, always: 「搵唔到？自己加」 → the manual entry fields.
 
 Search matches `nameZh` by substring and `nameEn` case-insensitively. No
 fuzzy matching, no network.
@@ -516,6 +589,62 @@ text:
 This screen is visible to every user in Phase 1.7 — there is no trainer role
 yet (that is Phase 5). Do not build a role check now; build the screen so a
 role check is a single guard later.
+
+### 8.6 The modifier step — 點食法
+
+Shown after tapping a food row that has applicable modifier groups. This is
+the screen that makes the whole food library honest, so it gets real design
+attention rather than a dialog.
+
+Layout:
+
+1. Dish name and the **baseline** it is stored at, from `portionLabel` —
+   e.g. `叉燒飯 · 正常飯、半肥瘦、有汁`. The student must be able to see what
+   they are adjusting *from*.
+2. One row of chips per modifier group, in the §6.3 order (飯量, 肉款, 皮,
+   醬汁, 甜度, 奶, 牛油, 花生醬, 加配料). Single-select within a group; the
+   `正常`/`0` option is pre-selected and visibly the default.
+3. A quantity stepper for `DIM_SUM` items, labelled in 件.
+4. **A live running total that shows its own arithmetic**, not just a number:
+
+   ```
+   939  基礎（正常飯、半肥瘦、有汁）
+   −120 瘦
+   −130 少飯
+   −100 走汁
+   ─────
+   589 kcal
+   ```
+
+   This is the point of the feature. The owner is a trainer teaching
+   students; seeing 走汁 −100 is the lesson, and `docs/07` §6.4 is the
+   argument for it. **Do not collapse this into a single figure** to save
+   vertical space — scroll instead.
+5. 記錄 confirms into the meal editor with the computed values, and the
+   chosen modifier ids stored on the meal so the row can be re-opened and
+   re-adjusted rather than retyped.
+
+Accessibility: each chip group is a `Row` with
+`Modifier.semantics { }` carrying the group name, so TalkBack announces
+「飯量：少飯，已選」 rather than a bare 「少飯」. Do **not** use
+`clearAndSetSemantics` on the chips — that clears their click action, which
+is the accessibility regression already made and reverted once in Phase 1.6.
+
+### 8.7 Meal storage for modifiers
+
+`meals` gains `baseFoodId TEXT` (nullable) and `modifierIds TEXT` (nullable,
+a comma-separated list of modifier ids). Both nullable because a manually
+typed meal has neither.
+
+- Written in the same `MIGRATION_2_3` as the new tables — one migration, one
+  version bump.
+- **Never recompute a saved meal's macros from the current base and
+  modifiers.** The meal stores its own final numbers, exactly like
+  `ExerciseEntry.kcal` (§10.2). If the owner later corrects 叉燒飯 from 939
+  to 880, last week's logged meals must not silently change — that would
+  rewrite the student's history and the trend engine's inputs. The ids are
+  kept only so the row can be re-opened for editing.
+- `MealType` inference, grouping, and every existing test stay untouched.
 
 ---
 
@@ -730,6 +859,28 @@ One per rule in §8.1, plus: `MEDIA` with a tight range is still `LOW` (rule 2
 beats rule 3); `DIETITIAN` with a 30% spread is `LOW` (rule 3 beats rule 4);
 `TRAINER` with a wide range is `HIGH` (rule 1 beats everything).
 
+### 15.4a `ModifiedFoodCalculatorTest` (new, 10)
+
+Base 叉燒飯: 939 kcal, 42 g P, 118 g C, 30 g F, category `ROAST_RICE`.
+
+| Modifiers | Expected kcal |
+|---|---|
+| none | `939` |
+| 瘦 (−120) | `819` |
+| 瘦 + 少飯 (−130) + 走汁 (−100) | `589` |
+| 走汁, quantity 2 | `1678` |
+
+Plus, each its own test:
+
+- Two options from the same `groupId` → throws.
+- A modifier whose `appliesTo` excludes `ROAST_RICE` (e.g. 走糖) → throws.
+- `quantity = 0` → throws.
+- A modifier with a null `proteinDelta` makes the result's protein **null**,
+  not 42 — the false-precision guard.
+- Clamping: a 120 kcal base with a −200 modifier yields `0.0`, never
+  negative.
+- Order independence: applying 瘦, 少飯, 走汁 in any permutation gives `589`.
+
 ### 15.5 `StreakCalculatorTest` (new, 7)
 
 Empty set → 0. Today only → 1. Yesterday only → 1. Today + yesterday → 2.
@@ -747,8 +898,10 @@ Same plain-JVM sqlite-jdbc approach as `MealTypeMigrationSqlTest`, `TZ`
 pinned to `Asia/Hong_Kong`:
 
 1. v2 schema + `MIGRATION_2_3_STATEMENTS` applies with no error.
-2. `food_items` has every expected column with the expected nullability.
-3. The seed row count matches the CSV row count.
+2. `food_items` and `food_modifiers` have every expected column with the
+   expected nullability, and `meals` has gained `baseFoodId` and
+   `modifierIds` as nullable.
+3. The seed row counts match each CSV's row count.
 4. Existing `meals` and `weight_entries` rows survive untouched.
 5. `UPDATE … WHERE editedByOwner = 0` leaves an owner-edited row alone.
 
@@ -791,12 +944,18 @@ New: `FoodLibraryViewModelTest` (5), `ExerciseEntryViewModelTest` (4),
 
 **PR B**
 
-12. `FoodItem`, `FoodConfidenceRules`, `StreakCalculator`,
-    `WaterGoalCalculator`, `DayTdeeCalculator`, `ExerciseEntry` + tests.
-13. `food_seed.csv` from `docs/07`; the Gradle seed-generation task.
-14. Room v3: three tables, `MIGRATION_2_3_STATEMENTS`, the SQL test.
+12. `FoodItem`, `FoodModifier`, `FoodConfidenceRules`,
+    `ModifiedFoodCalculator`, `StreakCalculator`, `WaterGoalCalculator`,
+    `DayTdeeCalculator`, `ExerciseEntry` + tests. `ModifiedFoodCalculator`
+    before any UI — the running total in §8.6 is its output.
+13. `food_seed.csv` and `food_modifier_seed.csv` from `docs/07` §4 and §6.3;
+    the Gradle seed-generation task. Restate dim sum per 件 and rewrite the
+    reconstructed rows' `portionLabel` while doing it.
+14. Room v3: four tables plus the two `meals` columns,
+    `MIGRATION_2_3_STATEMENTS`, the SQL test.
 15. Repositories + DAOs + mappers.
-16. 搵食物 sheet; the owner's 食物庫 editor.
+16. 搵食物 sheet; the 點食法 modifier step (§8.6) with the visible arithmetic;
+    the owner's 食物庫 editor, covering modifier deltas too.
 17. Exercise sheet with the visible formula; Home's 運動 section.
 18. Water row; streak chip.
 19. 數據來源 page.
