@@ -35,4 +35,15 @@ data class FoodItemEntity(
     val category: String, // FoodCategory.name
     val isSeed: Boolean,
     val editedByOwner: Boolean,
+    /**
+     * Phase 1.5 sync. Nullable, unlike the other tables' `updatedAt`, on purpose:
+     * seed rows are identical on every install and never sync, so they have no
+     * timestamp, and the seed INSERTs (which run on a fresh install after Room
+     * creates the table) do not name these columns. A non-null column here would
+     * make every fresh install crash while seeding. Only a row with
+     * `editedByOwner = true` is ever pending.
+     */
+    val updatedAtMillis: Long? = null,
+    /** See MealEntity.syncedAtMillis. */
+    val syncedAtMillis: Long? = null,
 )

@@ -25,9 +25,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
@@ -49,6 +51,8 @@ import com.defat.core.domain.model.MacroTargets
 import com.defat.core.domain.model.TdeeSource
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileRoute(
@@ -59,9 +63,39 @@ fun ProfileRoute(
     onTabSelected: (DefatTab) -> Unit,
     viewModel: ProfileViewModel = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel(),
+    accountViewModel: AccountViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val dayStart by settingsViewModel.dayStart.collectAsStateWithLifecycle()
+    val account by accountViewModel.uiState.collectAsStateWithLifecycle()
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var exportFailed by remember { mutableStateOf(false) }
+    val chooserTitle = stringResource(R.string.account_export)
+    val accountActions = remember(accountViewModel, context, chooserTitle) {
+        AccountActions(
+            onSignOut = accountViewModel::signOut,
+            onExport = {
+                scope.launch {
+                    exportFailed = false
+                    try {
+                        val version = runCatching {
+                            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+                        }.getOrNull().orEmpty()
+                        ExportShare.share(context, accountViewModel.exportJson(version), chooserTitle)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        exportFailed = true
+                    }
+                }
+            },
+            onDeleteAccount = accountViewModel::deleteAccount,
+            onDismissDeleteError = accountViewModel::dismissDeleteError,
+        )
+    }
+
     ProfileScreen(
         uiState = uiState,
         dayStart = dayStart,
@@ -72,6 +106,9 @@ fun ProfileRoute(
         onBodyFatChange = { text -> viewModel.updateForm { it.copy(bodyFatPctText = text) } },
         onGoalWeightChange = { text -> viewModel.updateForm { it.copy(goalTargetWeightText = text) } },
         onSave = viewModel::save,
+        account = account,
+        exportFailed = exportFailed,
+        accountActions = accountActions,
         onLogWeight = onLogWeight,
         onOpenFoodLibrary = onOpenFoodLibrary,
         onOpenSources = onOpenSources,
@@ -91,6 +128,9 @@ fun ProfileScreen(
     onBodyFatChange: (String) -> Unit,
     onGoalWeightChange: (String) -> Unit,
     onSave: () -> Unit,
+    account: AccountUiState,
+    exportFailed: Boolean,
+    accountActions: AccountActions,
     onLogWeight: () -> Unit,
     onOpenFoodLibrary: () -> Unit,
     onOpenSources: () -> Unit,
@@ -221,6 +261,9 @@ fun ProfileScreen(
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
+                    AccountSection(state = account, exportFailed = exportFailed, actions = accountActions)
+
+                    Spacer(modifier = Modifier.height(24.dp))
                     Text(stringResource(R.string.disclaimer_title), style = MaterialTheme.typography.titleSmall)
                     Text(stringResource(R.string.disclaimer_body), style = MaterialTheme.typography.bodySmall)
 
@@ -333,6 +376,14 @@ private fun ProfileScreenPreview() {
             onBodyFatChange = {},
             onGoalWeightChange = {},
             onSave = {},
+            account = AccountUiState(email = "student@example.com"),
+            exportFailed = false,
+            accountActions = AccountActions(
+                onSignOut = {},
+                onExport = {},
+                onDeleteAccount = {},
+                onDismissDeleteError = {},
+            ),
             onLogWeight = {},
             onOpenFoodLibrary = {},
             onOpenSources = {},

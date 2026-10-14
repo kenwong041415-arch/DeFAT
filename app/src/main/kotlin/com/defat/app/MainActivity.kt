@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import com.defat.app.navigation.DefatNavHost
+import com.defat.app.navigation.returnToSignIn
 import com.defat.app.ui.theme.DefatTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -26,6 +27,12 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
+
+    override fun onStart() {
+        super.onStart()
+        // Each time the app comes to the foreground (phase1.5 plan D6).
+        viewModel.syncOnOpen()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,6 +66,12 @@ private fun DefatApp(viewModel: MainViewModel) {
         }
     } else {
         val navController = rememberNavController()
+        val signedIn by viewModel.signedIn.collectAsStateWithLifecycle()
+        // Sign-out, account deletion and a revoked session all end here: whenever
+        // nobody is signed in, the only place to be is the sign-in screen.
+        LaunchedEffect(signedIn) {
+            if (signedIn == false) navController.returnToSignIn()
+        }
         DefatNavHost(navController = navController, startDestination = destination)
     }
 }

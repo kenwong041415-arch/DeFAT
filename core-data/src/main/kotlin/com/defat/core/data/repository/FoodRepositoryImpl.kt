@@ -7,6 +7,7 @@ import com.defat.core.data.mapper.toEntity
 import com.defat.core.domain.model.FoodItem
 import com.defat.core.domain.model.FoodModifier
 import com.defat.core.domain.repository.FoodRepository
+import java.time.Clock
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
@@ -18,6 +19,7 @@ import kotlinx.coroutines.withContext
 @Singleton
 class FoodRepositoryImpl @Inject constructor(
     private val foodDao: FoodDao,
+    private val clock: Clock,
     @IoDispatcher private val io: CoroutineDispatcher,
 ) : FoodRepository {
 
@@ -42,7 +44,7 @@ class FoodRepositoryImpl @Inject constructor(
     }
 
     override suspend fun upsertItem(item: FoodItem) = withContext(io) {
-        foodDao.upsertItem(item.toEntity())
+        foodDao.upsertItem(item.toEntity(updatedAtMillis = clock.millis()))
     }
 
     override suspend fun upsertModifier(modifier: FoodModifier) = withContext(io) {

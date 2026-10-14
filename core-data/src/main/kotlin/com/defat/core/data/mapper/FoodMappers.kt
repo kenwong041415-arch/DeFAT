@@ -8,7 +8,12 @@ import com.defat.core.domain.model.FoodItem
 import com.defat.core.domain.model.FoodModifier
 import com.defat.core.domain.model.FoodSource
 
-fun FoodItem.toEntity(): FoodItemEntity = FoodItemEntity(
+/**
+ * [updatedAtMillis] is stamped only for an owner-edited row (the ones that sync);
+ * a seed row has none. A fresh entity always has `syncedAtMillis = null`, so an
+ * owner edit is pending the moment it is saved.
+ */
+fun FoodItem.toEntity(updatedAtMillis: Long? = null): FoodItemEntity = FoodItemEntity(
     id = id,
     nameZh = nameZh,
     nameEn = nameEn,
@@ -25,6 +30,7 @@ fun FoodItem.toEntity(): FoodItemEntity = FoodItemEntity(
     category = category.name,
     isSeed = isSeed,
     editedByOwner = editedByOwner,
+    updatedAtMillis = if (editedByOwner) updatedAtMillis else null,
 )
 
 /**

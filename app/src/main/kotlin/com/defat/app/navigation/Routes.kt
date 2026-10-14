@@ -1,6 +1,18 @@
 package com.defat.app.navigation
 
 object Routes {
+    // Phase 1.5: shown ahead of onboarding whenever nobody is signed in.
+    const val AUTH_GRAPH = "auth"
+    const val AUTH_SIGN_IN = "auth/sign_in"
+    const val AUTH_SIGN_UP = "auth/sign_up"
+    const val AUTH_FORGOT = "auth/forgot"
+
+    /** Signed in but the first sync never finished; see StartDestinationPolicy. Outside AUTH_GRAPH on purpose. */
+    const val AUTH_FINISH = "auth_finish"
+
+    private val publicAuthRoutes = setOf(AUTH_SIGN_IN, AUTH_SIGN_UP, AUTH_FORGOT)
+    fun isPublicAuthRoute(route: String?): Boolean = route in publicAuthRoutes
+
     const val ONBOARDING_GRAPH = "onboarding"
     const val ONBOARDING_WELCOME = "onboarding/welcome"
     const val ONBOARDING_BASICS = "onboarding/basics"

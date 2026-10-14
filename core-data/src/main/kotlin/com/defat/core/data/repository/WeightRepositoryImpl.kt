@@ -6,6 +6,7 @@ import com.defat.core.data.mapper.toDomain
 import com.defat.core.data.mapper.toEntity
 import com.defat.core.domain.model.WeightEntry
 import com.defat.core.domain.repository.WeightRepository
+import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,6 +19,7 @@ import kotlinx.coroutines.withContext
 @Singleton
 class WeightRepositoryImpl @Inject constructor(
     private val weightDao: WeightDao,
+    private val clock: Clock,
     @IoDispatcher private val io: CoroutineDispatcher,
 ) : WeightRepository {
 
@@ -30,6 +32,6 @@ class WeightRepositoryImpl @Inject constructor(
             .flowOn(io)
 
     override suspend fun upsert(entry: WeightEntry) = withContext(io) {
-        weightDao.upsert(entry.toEntity())
+        weightDao.upsert(entry.toEntity(updatedAtMillis = clock.millis()))
     }
 }

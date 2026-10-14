@@ -9,6 +9,7 @@ import com.defat.core.data.di.IoDispatcher
 import com.defat.core.domain.calc.DayBoundary
 import com.defat.core.domain.repository.SettingsRepository
 import java.io.IOException
+import java.time.Clock
 import java.time.LocalTime
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,6 +29,7 @@ import kotlinx.coroutines.withContext
 @Singleton
 class SettingsRepositoryImpl @Inject constructor(
     private val dataStore: DataStore<Preferences>,
+    private val clock: Clock,
     @IoDispatcher private val io: CoroutineDispatcher,
 ) : SettingsRepository {
 
@@ -46,7 +48,12 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override suspend fun setDayStart(time: LocalTime) = withContext(io) {
         val minutes = DayBoundary.toMinutes(DayBoundary.dayStartFromMinutes(DayBoundary.toMinutes(time)))
-        dataStore.edit { prefs -> prefs[ProfileKeys.DAY_START_MINUTES] = minutes }
+        dataStore.edit { prefs ->
+            prefs[ProfileKeys.DAY_START_MINUTES] = minutes
+            // The day-start setting travels in the profile document, so it is a
+            // profile write as far as sync is concerned.
+            prefs[ProfileKeys.PROFILE_UPDATED_AT] = clock.millis()
+        }
         Unit
     }
 }

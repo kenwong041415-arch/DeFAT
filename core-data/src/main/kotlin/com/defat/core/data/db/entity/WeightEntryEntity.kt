@@ -13,4 +13,6 @@ data class WeightEntryEntity(
     val updatedAtMillis: Long,
     val remoteId: String? = null,
     val pendingSync: Boolean = true,
+    /** See MealEntity.syncedAtMillis. [updatedAtMillis] is the sync `updatedAt`. */
+    val syncedAtMillis: Long? = null,
 )

@@ -4,7 +4,7 @@ import com.defat.core.data.db.entity.ExerciseEntryEntity
 import com.defat.core.domain.model.ExerciseEntry
 import java.time.Instant
 
-fun ExerciseEntry.toEntity(): ExerciseEntryEntity = ExerciseEntryEntity(
+fun ExerciseEntry.toEntity(updatedAtMillis: Long = System.currentTimeMillis()): ExerciseEntryEntity = ExerciseEntryEntity(
     id = id,
     loggedAtMillis = loggedAt.toEpochMilli(),
     activityKey = activityKey,
@@ -13,6 +13,7 @@ fun ExerciseEntry.toEntity(): ExerciseEntryEntity = ExerciseEntryEntity(
     weightKgAtTime = weightKgAtTime,
     kcal = kcal,
     note = note,
+    updatedAtMillis = updatedAtMillis,
 )
 
 fun ExerciseEntryEntity.toDomain(): ExerciseEntry = ExerciseEntry(

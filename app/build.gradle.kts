@@ -6,6 +6,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    // Reads app/google-services.json. The file is gitignored (docs/06); a fresh
+    // clone copies google-services.example.json and fills in its own values, and
+    // CI writes it from the GOOGLE_SERVICES_JSON secret.
+    alias(libs.plugins.google.services)
 }
 
 android {

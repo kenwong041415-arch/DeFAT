@@ -12,6 +12,12 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.defat.app.StartDestination
+import com.defat.app.ui.auth.AuthCompletion
+import com.defat.app.ui.auth.AuthViewModel
+import com.defat.app.ui.auth.FinishSignInRoute
+import com.defat.app.ui.auth.ForgotPasswordRoute
+import com.defat.app.ui.auth.SignInRoute
+import com.defat.app.ui.auth.SignUpRoute
 import com.defat.app.ui.component.DefatTab
 import com.defat.app.ui.food.FoodLibraryEditorRoute
 import com.defat.app.ui.history.HistoryRoute
@@ -49,10 +55,58 @@ fun DefatNavHost(
     // reads the selected day itself (SelectedDayHolder), so no argument is needed.
     val addMeal: () -> Unit = { navController.navigate(Routes.MEAL_ADD) }
 
+    // After sign-in: straight to Home if a profile is already on the phone (the
+    // owner's existing records, or an account downloaded from the cloud), else to
+    // onboarding. Clears the whole back stack so Back cannot return to sign-in.
+    val completeAuth: (AuthCompletion) -> Unit = { completion ->
+        val target = if (completion == AuthCompletion.HOME) Routes.HOME else Routes.ONBOARDING_GRAPH
+        navController.navigate(target) {
+            popUpTo(navController.graph.id) { inclusive = true }
+            launchSingleTop = true
+        }
+    }
+
     NavHost(
         navController = navController,
-        startDestination = if (startDestination == StartDestination.HOME) Routes.HOME else Routes.ONBOARDING_GRAPH,
+        startDestination = when (startDestination) {
+            StartDestination.SIGN_IN -> Routes.AUTH_GRAPH
+            StartDestination.FINISH_SIGN_IN -> Routes.AUTH_FINISH
+            StartDestination.NEEDS_ONBOARDING -> Routes.ONBOARDING_GRAPH
+            StartDestination.HOME -> Routes.HOME
+        },
     ) {
+        navigation(startDestination = Routes.AUTH_SIGN_IN, route = Routes.AUTH_GRAPH) {
+            composable(Routes.AUTH_SIGN_IN) { entry ->
+                SignInRoute(
+                    viewModel = authViewModel(navController, entry),
+                    onCreateAccount = { navController.navigate(Routes.AUTH_SIGN_UP) },
+                    onForgotPassword = { navController.navigate(Routes.AUTH_FORGOT) },
+                    onCompleted = completeAuth,
+                )
+            }
+            composable(Routes.AUTH_SIGN_UP) { entry ->
+                SignUpRoute(
+                    viewModel = authViewModel(navController, entry),
+                    onHaveAccount = { navController.popBackStack() },
+                    onCompleted = completeAuth,
+                )
+            }
+            composable(Routes.AUTH_FORGOT) { entry ->
+                ForgotPasswordRoute(
+                    viewModel = authViewModel(navController, entry),
+                    onBack = { navController.popBackStack() },
+                )
+            }
+        }
+        composable(Routes.AUTH_FINISH) {
+            val viewModel: AuthViewModel = hiltViewModel()
+            FinishSignInRoute(
+                viewModel = viewModel,
+                onSignOut = viewModel::signOut,
+                onCompleted = completeAuth,
+            )
+        }
+
         navigation(startDestination = Routes.ONBOARDING_WELCOME, route = Routes.ONBOARDING_GRAPH) {
             composable(Routes.ONBOARDING_WELCOME) { entry ->
                 val vm = onboardingViewModel(navController, entry)
@@ -165,4 +219,28 @@ private fun onboardingViewModel(
 ): OnboardingViewModel {
     val parentEntry = remember(entry) { navController.getBackStackEntry(Routes.ONBOARDING_GRAPH) }
     return hiltViewModel(parentEntry)
+}
+
+/** Scopes [AuthViewModel] to the auth nav graph so the typed email survives moving between the three screens. */
+@Composable
+private fun authViewModel(
+    navController: NavController,
+    entry: androidx.navigation.NavBackStackEntry,
+): AuthViewModel {
+    val parentEntry = remember(entry) { navController.getBackStackEntry(Routes.AUTH_GRAPH) }
+    return hiltViewModel(parentEntry)
+}
+
+/**
+ * Back to the sign-in screen with an empty back stack. A no-op when a public auth
+ * screen is already showing; the finish-sign-in screen is *not* one of those,
+ * because "Sign out" there has to leave it.
+ */
+fun NavController.returnToSignIn() {
+    val current = currentDestination ?: return
+    if (Routes.isPublicAuthRoute(current.route)) return
+    navigate(Routes.AUTH_GRAPH) {
+        popUpTo(graph.id) { inclusive = true }
+        launchSingleTop = true
+    }
 }

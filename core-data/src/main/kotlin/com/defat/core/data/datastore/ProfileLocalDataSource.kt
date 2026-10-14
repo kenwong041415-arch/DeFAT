@@ -9,6 +9,7 @@ import com.defat.core.domain.model.Goal
 import com.defat.core.domain.model.Sex
 import com.defat.core.domain.model.UserProfile
 import java.io.IOException
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.map
  */
 class ProfileLocalDataSource @Inject constructor(
     private val dataStore: DataStore<Preferences>,
+    private val clock: Clock,
 ) {
     val profile: Flow<UserProfile?> =
         dataStore.data
@@ -74,6 +76,7 @@ class ProfileLocalDataSource @Inject constructor(
                 prefs.remove(ProfileKeys.DISCLAIMER_ACCEPTED_AT)
             }
             prefs[ProfileKeys.ONBOARDING_COMPLETE] = true
+            prefs[ProfileKeys.PROFILE_UPDATED_AT] = clock.millis()
         }
     }
 
@@ -85,6 +88,7 @@ class ProfileLocalDataSource @Inject constructor(
             } else {
                 prefs.remove(ProfileKeys.BODY_FAT_PCT)
             }
+            prefs[ProfileKeys.PROFILE_UPDATED_AT] = clock.millis()
         }
     }
 

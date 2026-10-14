@@ -6,6 +6,7 @@ import com.defat.core.data.mapper.toDomain
 import com.defat.core.data.mapper.toEntity
 import com.defat.core.domain.model.Meal
 import com.defat.core.domain.repository.MealRepository
+import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,6 +19,7 @@ import kotlinx.coroutines.withContext
 @Singleton
 class MealRepositoryImpl @Inject constructor(
     private val mealDao: MealDao,
+    private val clock: Clock,
     @IoDispatcher private val io: CoroutineDispatcher,
 ) : MealRepository {
 
@@ -41,10 +43,11 @@ class MealRepositoryImpl @Inject constructor(
     }
 
     override suspend fun upsert(meal: Meal) = withContext(io) {
-        mealDao.upsert(meal.toEntity())
+        mealDao.upsert(meal.toEntity(updatedAtMillis = clock.millis()))
     }
 
+    /** A tombstone, not a row delete: the deletion has to sync (phase1.5 plan §6.2). */
     override suspend fun delete(id: String) = withContext(io) {
-        mealDao.delete(id)
+        mealDao.softDelete(id, clock.millis())
     }
 }

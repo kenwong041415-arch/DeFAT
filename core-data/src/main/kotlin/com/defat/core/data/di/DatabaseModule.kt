@@ -10,6 +10,7 @@ import com.defat.core.data.db.FoodDao
 import com.defat.core.data.db.FoodMigrations
 import com.defat.core.data.db.MealDao
 import com.defat.core.data.db.MealMigrations
+import com.defat.core.data.db.SyncMigrations
 import com.defat.core.data.db.WaterDao
 import com.defat.core.data.db.WeightDao
 import dagger.Module
@@ -27,7 +28,11 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): DefatDatabase =
         Room.databaseBuilder(context, DefatDatabase::class.java, DefatDatabase.DATABASE_NAME)
-            .addMigrations(MealMigrations.MIGRATION_1_2, FoodMigrations.MIGRATION_2_3)
+            .addMigrations(
+                MealMigrations.MIGRATION_1_2,
+                FoodMigrations.MIGRATION_2_3,
+                SyncMigrations.MIGRATION_3_4,
+            )
             // A fresh install is created at the current version and never runs a
             // migration, so it needs the food library seeded here. Not called
             // for an upgraded database, whose seed comes from MIGRATION_2_3.

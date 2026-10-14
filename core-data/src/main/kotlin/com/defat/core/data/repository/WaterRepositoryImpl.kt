@@ -4,6 +4,7 @@ import com.defat.core.data.db.WaterDao
 import com.defat.core.data.db.entity.WaterLogEntity
 import com.defat.core.data.di.IoDispatcher
 import com.defat.core.domain.repository.WaterRepository
+import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,6 +18,7 @@ import kotlinx.coroutines.withContext
 @Singleton
 class WaterRepositoryImpl @Inject constructor(
     private val waterDao: WaterDao,
+    private val clock: Clock,
     @IoDispatcher private val io: CoroutineDispatcher,
 ) : WaterRepository {
 
@@ -27,6 +29,12 @@ class WaterRepositoryImpl @Inject constructor(
             .flowOn(io)
 
     override suspend fun setWaterMl(date: LocalDate, ml: Int) = withContext(io) {
-        waterDao.upsert(WaterLogEntity(dateEpochDay = date.toEpochDay(), ml = ml.coerceAtLeast(0)))
+        waterDao.upsert(
+            WaterLogEntity(
+                dateEpochDay = date.toEpochDay(),
+                ml = ml.coerceAtLeast(0),
+                updatedAtMillis = clock.millis(),
+            ),
+        )
     }
 }

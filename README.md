@@ -50,6 +50,21 @@ All of the calorie, macro, BMR and TDEE math lives there, so this is the
 check worth running before any push. CI uses the real `settings.gradle.kts`
 and builds all three modules.
 
+### Firebase config (`google-services.json`)
+
+`:app` needs `app/google-services.json`, which is **gitignored** (docs/06) and
+therefore missing from a fresh clone; the build stops with Google's "File
+google-services.json is missing" error until it exists. Copy
+[`app/google-services.example.json`](app/google-services.example.json) to
+`app/google-services.json` and fill in your own Firebase project's values, or
+ask the project owner for theirs. CI writes the file from the
+`GOOGLE_SERVICES_JSON` repository secret, which GitHub does not give to pull
+requests from forks.
+
+The Firestore security rules (`firestore.rules`) have their own tests, which
+run against the Firebase emulator and need Node and Java:
+`cd firestore-tests && npm ci && npm run test:emulator`.
+
 GitHub Actions (`.github/workflows/android-ci.yml`) builds and tests every
 push/PR and uploads a debug APK artifact — no local Android SDK required
 to get an installable build.
