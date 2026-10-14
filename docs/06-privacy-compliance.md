@@ -12,7 +12,12 @@ every phase; new data collection requires updating this doc first.
    user logs) sync to Firestore.
 3. **User owns the data** — provide in-app: export my data (JSON/CSV) and
    delete my account (wipes Firestore docs + Storage photos). Required by
-   Google Play and basic decency.
+   Google Play and basic decency. Implemented in Phase 1.5: export is a local
+   JSON file; delete re-checks the password, empties every subcollection in
+   `SYNCED_SUBCOLLECTIONS` (the list sync also uses, so a new collection
+   cannot be forgotten), verifies with the server that nothing is left,
+   deletes the Auth user, then clears the phone. Photos join the delete in
+   the phase that adds them.
 4. **Trainer access is consented** — students explicitly accept trainer
    visibility during onboarding; the consent text says exactly what the
    trainer sees (logs, weight trend, photos only if shared).
@@ -47,8 +52,54 @@ every phase; new data collection requires updating this doc first.
 ## Security
 
 - Firestore security rules: user reads/writes own subtree; trainer role
-  read-only on assigned students; deny-all default. Rules get their own
-  tests (Firebase emulator) in Phase 1.
+  read-only on assigned students; deny-all default. Rules have their own
+  tests against the Firebase emulator (`firestore-tests/`, CI workflow
+  `firestore-rules.yml`), most of them *negative*: another signed-in user,
+  an unauthenticated client, a path outside `users/`, and a payload that
+  claims someone else's uid are each shown to be denied. Ownership is always
+  the uid in the document **path**, never a field in the payload.
+  `firestore.rules` is deployed by the owner (console or CLI), not by CI.
+- **The Firebase API key is public by design.** The repository is public and
+  the test APK is a login-free release asset, so the key in `google-services.json`
+  ships to anyone. Security rules are therefore the *only* control on the data
+  until App Check exists.
+- **Accepted gap — App Check is not enabled (Phase 1.5 decision D5).** Its Play
+  Integrity provider wants Play Store distribution and the debug provider
+  needs a token registered per install; that friction buys little while the
+  owner is the only user. **Closing condition: App Check must be enabled
+  before any student other than the owner uses the app.**
+- **No `role` field is written, on purpose (Phase 1.5 review pass).** The plan
+  had the client write `role: "student"` into the profile document so Phase 5
+  would need no migration. It was removed: the rules let a user write their own
+  profile, so a client-written `role` is a field the user controls, and a
+  Phase 5 that granted trainer access from it would hand that access out on
+  request. Leaving it out means there is nothing there to mistake for an
+  authority. **Phase 5 must set the role from something a client cannot
+  write** — a custom auth claim, or a document only the Admin SDK writes.
+- **Accepted gap — sign-up is open, and the API key is public.** Anyone who
+  pulls the key out of the APK can create an account and write into their own
+  tree. The rules keep them out of *other* people's data, which is the part
+  that matters, but they can still consume the project's free-tier quota and so
+  degrade the service for real users. Spark offers no way to close this; the
+  real controls are App Check and a Blaze budget alert. **Same closing
+  condition as App Check: before any student other than the owner uses the
+  app.**
+- **Accepted gap — a deleted row keeps its contents in the cloud until the
+  account is deleted.** Deletes sync as tombstones (`deletedAt`) rather than
+  hard deletes, because a hard delete on one phone is indistinguishable from a
+  row the other phone has not seen yet, and the row would come back. The
+  tombstone keeps the original fields, so a meal the student deleted is still
+  stored — in their own private tree, readable only by them, and removed by
+  "delete my account". Stripping the fields on upload was considered and not
+  done in this phase: applying a field-less tombstone needs a new port
+  operation on every collection, in the two modules this container cannot
+  compile, for a modest gain on data that never leaves the owner's tree.
+  **Closing condition: before Phase 5 closed testing**, either strip tombstone
+  payloads on upload or add a purge of tombstones older than 30 days.
+- **Account data on the phone.** Firestore's own local cache is set to memory
+  only, so cloud sync adds no second on-device copy of health data beyond
+  Room. The "Export my data" file is written to the app's private cache,
+  shared through FileProvider, and deleted at the next app start.
 - Claude API key in Secret Manager only; Cloud Functions enforce auth +
   quota (`docs/05`).
 - No secrets, release keystores, or `google-services.json` with production

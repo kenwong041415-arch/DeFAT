@@ -6,6 +6,7 @@ import com.defat.core.data.mapper.toDomain
 import com.defat.core.data.mapper.toEntity
 import com.defat.core.domain.model.ExerciseEntry
 import com.defat.core.domain.repository.ExerciseRepository
+import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,6 +19,7 @@ import kotlinx.coroutines.withContext
 @Singleton
 class ExerciseRepositoryImpl @Inject constructor(
     private val exerciseDao: ExerciseDao,
+    private val clock: Clock,
     @IoDispatcher private val io: CoroutineDispatcher,
 ) : ExerciseRepository {
 
@@ -32,10 +34,11 @@ class ExerciseRepositoryImpl @Inject constructor(
             .flowOn(io)
 
     override suspend fun upsert(entry: ExerciseEntry) = withContext(io) {
-        exerciseDao.upsert(entry.toEntity())
+        exerciseDao.upsert(entry.toEntity(updatedAtMillis = clock.millis()))
     }
 
+    /** A tombstone, not a row delete: the deletion has to sync (phase1.5 plan §6.2). */
     override suspend fun delete(id: String) = withContext(io) {
-        exerciseDao.delete(id)
+        exerciseDao.softDelete(id, clock.millis())
     }
 }

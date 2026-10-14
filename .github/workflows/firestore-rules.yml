@@ -1,0 +1,66 @@
+name: Firestore rules
+
+# Runs the security-rules tests against the Firebase emulator. Kept out of the
+# Android workflow because it needs Node and the emulator, not the Android SDK,
+# and it only matters when the rules (or the list of collections the tests read)
+# change.
+#
+# Why this exists: the repository is public and the test APK is published
+# login-free, so the Firebase API key is public by design. firestore.rules is the
+# ONLY thing protecting users' health data (phase1.5 plan §2).
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'firestore.rules'
+      - 'firebase.json'
+      - 'firestore-tests/**'
+      # The tests read the collection list from this file.
+      - 'core-domain/src/main/kotlin/com/defat/core/domain/sync/SyncCollections.kt'
+      - '.github/workflows/firestore-rules.yml'
+  pull_request:
+    paths:
+      - 'firestore.rules'
+      - 'firebase.json'
+      - 'firestore-tests/**'
+      - 'core-domain/src/main/kotlin/com/defat/core/domain/sync/SyncCollections.kt'
+      - '.github/workflows/firestore-rules.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firestore-rules-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rules:
+    name: Rules tests (emulator)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # The Firestore emulator is a Java program.
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: firestore-tests/package-lock.json
+
+      - name: Install test dependencies
+        working-directory: firestore-tests
+        run: npm ci
+
+      - name: Run rules tests against the emulator
+        working-directory: firestore-tests
+        run: npm run test:emulator

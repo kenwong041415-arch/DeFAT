@@ -16,6 +16,11 @@ data class MealEntity(
     val carbsG: Double,
     val fatG: Double,
     val source: String, // MealSource.name
+    /**
+     * Last local write, stamped from the injected Clock on every save. Doubles
+     * as the sync `updatedAt` (phase1.5 plan §6.1): it has existed since v1, so
+     * v4 adds no second copy of it.
+     */
     val updatedAtMillis: Long,
     val remoteId: String? = null, // D8 — Phase 1.5 sync
     val pendingSync: Boolean = true, // D8
@@ -37,4 +42,13 @@ data class MealEntity(
     val baseFoodId: String? = null,
     /** Comma-separated modifier ids from 點食法; null for a typed meal. */
     val modifierIds: String? = null,
+    /**
+     * When this row's current version reached Firestore; null = never. A row is
+     * pending when this is null or older than [updatedAtMillis]. Every ordinary
+     * write builds a fresh entity with null here, so a write cannot be mistaken
+     * for already uploaded. Added in v4 as a nullable column with no DEFAULT.
+     */
+    val syncedAtMillis: Long? = null,
+    /** Tombstone (phase1.5 plan §6.2). Non-null = deleted; every read query filters it out. */
+    val deletedAtMillis: Long? = null,
 )

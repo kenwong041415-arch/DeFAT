@@ -1,5 +1,6 @@
 package com.defat.core.data.datastore
 
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -26,4 +27,23 @@ object ProfileKeys {
      * profile, but it lives in the same file so there is one DataStore.
      */
     val DAY_START_MINUTES = intPreferencesKey("day_start_minutes")
+
+    /**
+     * Phase 1.5 sync bookkeeping for the profile document, the same pair every
+     * Room row has: when the profile was last written locally, and when that
+     * version last reached Firestore. Pending = synced is absent or older.
+     * Every write to a profile field (including the day-start setting and a
+     * weight log) must bump [PROFILE_UPDATED_AT]; ProfileLocalDataSource and
+     * SettingsRepositoryImpl do.
+     */
+    val PROFILE_UPDATED_AT = longPreferencesKey("profile_updated_at")
+    val PROFILE_SYNCED_AT = longPreferencesKey("profile_synced_at")
+
+    /** Every key that belongs to the profile (not to sync state). Used to wipe it. */
+    val ALL_PROFILE_KEYS: List<Preferences.Key<*>> = listOf(
+        SEX, BIRTH_DATE, HEIGHT_CM, WEIGHT_KG, BODY_FAT_PCT, ACTIVITY_LEVEL,
+        GOAL_TARGET_WEIGHT_KG, GOAL_TARGET_FAT_PCT, GOAL_TARGET_DATE,
+        DISCLAIMER_ACCEPTED_AT, ONBOARDING_COMPLETE, DAY_START_MINUTES,
+        PROFILE_UPDATED_AT, PROFILE_SYNCED_AT,
+    )
 }

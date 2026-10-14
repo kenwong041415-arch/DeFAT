@@ -18,7 +18,7 @@ import com.defat.core.data.db.entity.WeightEntryEntity
         ExerciseEntryEntity::class,
         WaterLogEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class DefatDatabase : RoomDatabase() {

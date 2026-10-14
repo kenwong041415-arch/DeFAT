@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Ownership is the uid in the document PATH, matched against the signed-in
+    // user. It is never a field in the payload: a caller controls the payload.
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Everything the app stores lives under users/{uid}. Nothing else is
+    // matched, so everything else is denied (Firestore's default).
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      // Every subcollection at any depth: meals, weights, exercise, water,
+      // foodOverrides, days, and whatever is added later.
+      match /{sub=**} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+  }
+}

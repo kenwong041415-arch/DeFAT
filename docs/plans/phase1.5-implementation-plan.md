@@ -331,6 +331,52 @@ Firestore covering push batching at the 400 boundary.
 
 ---
 
+## 10a. Corrections from the Opus review pass
+
+Four changes to this plan, all made after the implementation pass reported
+them. Recorded here rather than silently applied.
+
+1. **Case A was only guarded in one direction.** §6.3 said "push only, nothing
+   is downloaded first", which protects the phone from an empty cloud — the
+   loss this phase was written to prevent. It left the opposite direction
+   open: weights are keyed by date, water by day and the profile is a single
+   fixed document, so a phone used offline and signed in later would
+   blind-push over *newer* records made on a phone that was already signed in.
+   `SignInPlan.ADOPT_LOCAL_PUSH_ONLY` is now `ADOPT_LOCAL`, and
+   `SyncEngine.adoptLocal()` reads the remote tree to compare stamps, holds
+   back any row the cloud has a newer copy of, and lets the pull that follows
+   reconcile it. Reading is safe; the engine only ever upserts and never
+   deletes a local row because a remote document is absent, which is the
+   property that makes an empty cloud harmless. Eight tests cover both
+   directions, and removing the guard fails exactly one of them.
+
+2. **`users/{uid}.role` is not written at all.** §4 had the client write
+   `role: "student"` so Phase 5 would need no migration. But the rules let a
+   user write their own profile document, so that field is one the user
+   controls, and a Phase 5 granting trainer access from it would hand that
+   access out on request. Removed: Phase 5 sets the role from something a
+   client cannot write. `docs/06` carries the rule.
+
+3. **A failed sync now queues a catch-up constrained on connectivity.** §1.1
+   promises a meal logged offline reaches Firestore "once the network
+   returns"; D6's 6-hourly job does not deliver that. `scheduleCatchUp()`
+   enqueues one `OneTimeWorkRequest` with `NetworkType.CONNECTED`, which
+   WorkManager releases when the phone reconnects and which survives the app
+   being killed.
+
+4. **D4's "server timestamp" needed splitting in two**, as the implementation
+   pass found: the *pull cursor* must be a server timestamp or a phone with a
+   slow clock never sees another phone's writes, while *conflict resolution*
+   compares the client `updatedAt` that D4's last-write-wins is defined on.
+   Both are now explicit.
+
+Three findings were **recorded rather than fixed**, each with a closing
+condition in `docs/06`: open sign-up against a public API key (quota
+exhaustion, not data exposure), tombstones keeping a deleted row's fields
+until account deletion, and App Check still being absent. The first and third
+close before any student other than the owner uses the app; the second before
+Phase 5 closed testing.
+
 ## 11. Risks
 
 ### R1 (CRITICAL) — first sign-in destroying the owner's existing records

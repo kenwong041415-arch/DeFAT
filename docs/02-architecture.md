@@ -48,8 +48,10 @@ Android imports.
 - `users/{uid}` — profile: name, sex, birthDate, heightCm, activityLevel,
   goal {targetWeightKg, targetFatPct, targetDate}, dietary flags, locale,
   role (`student` | `trainer`), trainerId.
-- `users/{uid}/measurements/{date}` — weightKg, fatPct, waistCm…, source
-  (`manual` | `healthconnect`).
+- `users/{uid}/weights/{date}` — weightKg, fatPct, loggedAt, source
+  (`manual` | `healthconnect`). *(Phase 1.5 plan §4 named this `weights`;
+  the first cut here said `measurements`. `waistCm` and other tape
+  measurements get their own collection when they exist.)*
 - `users/{uid}/days/{date}` — cached daily rollup: bmr, tdee, activeKcal,
   steps, intakeKcal, protein/carbs/fatG, balance, status comment.
 - `users/{uid}/meals/{mealId}` — timestamp, mealType (breakfast|lunch|
@@ -59,6 +61,23 @@ Android imports.
   `mealType` was added in Phase 1.6 and already exists on-device (Room v2);
   Phase 1.5 sync must carry it.
 - `users/{uid}/feedback/{id}` — generated comments, trainer notes.
+- `users/{uid}/exercise/{id}`, `users/{uid}/water/{epochDay}`,
+  `users/{uid}/foodOverrides/{foodId}` — added in Phase 1.5. `foodOverrides`
+  holds only the rows the owner edited in the 食物庫; the seeded library is
+  identical on every install and never syncs.
+
+**The list of subcollections lives in one place** —
+`core-domain/.../sync/SyncCollections.kt` (`SYNCED_SUBCOLLECTIONS`). The sync
+engine, the delete-account routine and the rules tests all read it.
+
+**Sync model (Phase 1.5).** Room is the single write path and the UI reads
+only Room, so a sync failure can never block logging. Every synced row carries
+`updatedAt`, `syncedAt` (null or older than `updatedAt` = pending) and, for
+deletable rows, a `deletedAt` tombstone. Conflict is last-write-wins per
+document on the client `updatedAt`; equal timestamps keep local. Pulling is
+driven by a separate server-assigned `serverUpdatedAt`, because a phone's own
+clock cannot be trusted to order another phone's commits. Pulling only ever
+upserts; it never deletes a local row because a cloud document is missing.
 
 Rule of thumb: the app always trusts `finalValues` (user-confirmed), never
 the raw AI estimate.

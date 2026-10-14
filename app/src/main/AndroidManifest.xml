@@ -2,10 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-        No permissions at all in Phase 1 (no internet, no camera). This is a
-        deliberate, checkable property: the APK the owner installs cannot
-        leak anything (plan §8.5).
+        Phase 1.5 adds the first and only permissions: network access for
+        sign-in and cloud sync (Firebase Auth + Firestore). The app still has no
+        camera, location, contacts or storage permission. Health data leaves the
+        phone only as the rows the user logs, only to their own Firestore tree,
+        and only after they sign in (docs/06 principle 2).
     -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:name=".DefatApplication"
@@ -27,6 +31,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Serves the "Export my data" JSON from the private cache to the share sheet. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

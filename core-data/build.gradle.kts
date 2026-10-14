@@ -33,6 +33,15 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
+    // Phase 1.5: sign-in and cloud sync. The BoM pins the three Firebase
+    // artifacts to versions released together. The app module applies the
+    // google-services plugin; the Firebase code itself lives here.
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth.ktx)
+    implementation(libs.firebase.firestore.ktx)
+    implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.androidx.work.runtime.ktx)
+
     testImplementation(libs.junit)
     testImplementation(kotlin("test"))
     testImplementation(libs.kotlinx.coroutines.test)

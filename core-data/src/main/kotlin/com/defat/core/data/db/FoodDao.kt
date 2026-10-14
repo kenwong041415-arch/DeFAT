@@ -40,4 +40,33 @@ interface FoodDao {
 
     @Upsert
     suspend fun upsertModifier(modifier: FoodModifierEntity)
+
+    // ---- sync: only owner-edited food_items rows (foodOverrides) ----
+
+    @Query("SELECT * FROM food_items WHERE ${SyncSql.FOOD_PENDING}")
+    suspend fun pendingOverrides(): List<FoodItemEntity>
+
+    @Query("SELECT COUNT(*) FROM food_items WHERE editedByOwner = 1")
+    suspend fun overrideCount(): Int
+
+    @Query("SELECT * FROM food_items WHERE editedByOwner = 1 ORDER BY id ASC")
+    suspend fun allOverrides(): List<FoodItemEntity>
+
+    /** Conditional on `updatedAtMillis` still matching, like the other tables. */
+    @Query("UPDATE food_items SET syncedAtMillis = :updatedAtMillis WHERE id = :id AND COALESCE(updatedAtMillis, 0) = :updatedAtMillis")
+    suspend fun markOverrideSynced(id: String, updatedAtMillis: Long)
+
+    @Query("UPDATE food_items SET syncedAtMillis = NULL WHERE editedByOwner = 1")
+    suspend fun markAllOverridesPending()
+
+    /**
+     * Account deletion and Case C "Replace" only. This is the one place that is
+     * allowed to delete food rows: the owner's edits belong to the account that
+     * is being removed. Callers re-run the seed in the same transaction.
+     */
+    @Query("DELETE FROM food_items")
+    suspend fun deleteAllItems()
+
+    @Query("DELETE FROM food_modifiers")
+    suspend fun deleteAllModifiers()
 }
